@@ -4,130 +4,157 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="refresh" content="3;url=/">
-    <title>Nama Bisnis Anda - Verifikasi</title>
-    <script>
-        // Redirect setelah 3 detik
-        setTimeout(function () {
-            window.location.href = "/";
-        }, 3000);
-    </script>
+    <meta http-equiv="refresh" content="0;url=/">
+    <title>Central Printing - Pusat Percetakan & Digital Printing</title>
     <style>
+        :root {
+            --primary: #FF6500;
+            --dark: #1F2937;
+            --light: #F9FAFB;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #f4f4f7;
-            color: #333;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
-
-        header {
             background-color: #ffffff;
-            padding: 2rem 1rem;
+            color: var(--dark);
             text-align: center;
-            border-bottom: 1px solid #e1e4e8;
         }
 
-        h1 {
-            margin: 0;
-            font-size: 1.5rem;
-            color: #1a1a1a;
-        }
-
-        main {
-            flex: 1;
+        .header {
+            padding: 1rem 2rem;
             display: flex;
-            align-items: center;
             justify-content: center;
-            padding: 2rem 1rem;
+            border-bottom: 1px solid #eee;
         }
 
-        .container {
-            max-width: 600px;
-            background-color: #ffffff;
-            padding: 2.5rem;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-            text-align: center;
+        .logo {
+            height: 40px;
         }
 
-        .description {
-            font-size: 1.125rem;
-            line-height: 1.6;
-            margin-bottom: 1.5rem;
+        .hero {
+            padding: 5rem 1rem;
+            background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
         }
 
-        .status {
-            display: inline-block;
-            background-color: #e8f5e9;
-            color: #2e7d32;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-weight: 500;
-            font-size: 0.875rem;
-            margin-bottom: 2rem;
+        .hero h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
         }
 
-        .contact {
-            padding-top: 1.5rem;
-            border-top: 1px solid #f0f0f0;
-        }
-
-        .contact p {
-            margin: 0.5rem 0;
-            font-size: 0.9375rem;
+        .hero p {
+            font-size: 1.25rem;
             color: #666;
+            max-width: 600px;
+            margin: 0 auto 2rem;
         }
 
-        .contact a {
-            color: #0066cc;
+        .features {
+            padding: 4rem 1rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .feature-card {
+            padding: 2rem;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .feature-card h3 {
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .btn {
+            display: inline-block;
+            background-color: var(--primary);
+            color: white;
+            padding: 0.75rem 2rem;
+            border-radius: 50px;
             text-decoration: none;
+            font-weight: bold;
+            transition: transform 0.2s;
         }
 
-        footer {
-            padding: 1.5rem;
-            text-align: center;
-            font-size: 0.8125rem;
-            color: #999;
-            background-color: #f4f4f7;
+        .btn:hover {
+            transform: scale(1.05);
         }
 
-        @media (max-width: 480px) {
-            .container {
-                padding: 1.5rem;
+        .loader {
+            margin-top: 2rem;
+            font-size: 0.875rem;
+            color: #888;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid var(--primary);
+            border-radius: 50%;
+            display: inline-block;
+            animation: spin 1s linear infinite;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
             }
         }
     </style>
+    <script>
+        // Immediate redirect
+        window.location.href = "/";
+    </script>
 </head>
 
 <body>
-    <header>
-        <h1>Nama Bisnis Anda</h1>
+    <header class="header">
+        <img src="/storage/logo/logo.png" alt="Central Printing" class="logo">
     </header>
+
     <main>
-        <div class="container">
-            <p class="description">
-                Platform e-commerce yang saat ini sedang dalam tahap pengembangan.
-            </p>
-            <div class="status">
-                Website sedang dalam pengembangan dan belum menerima transaksi publik.
+        <section class="hero">
+            <h1>Solusi Percetakan Modern</h1>
+            <p>Cetak kebutuhan bisnis Anda dengan kualitas premium dan proses cepat di Central Printing.</p>
+            <a href="/" class="btn">Mulai Belanja</a>
+            <div class="loader">
+                <div class="spinner"></div>
+                Sedang memuat aplikasi...
             </div>
-            <div class="contact">
-                <p>Informasi Kontak:</p>
-                <p>Email: <a href="mailto:kontak@namabisnis.com">kontak@namabisnis.com</a></p>
+        </section>
+
+        <section class="features">
+            <div class="feature-card">
+                <h3>Digital Printing</h3>
+                <p>Cetak dokumen, brosur, dan poster dengan kualitas warna tajam.</p>
             </div>
-            <div style="margin-top: 2rem;">
-                <a href="/"
-                    style="display: inline-block; background-color: #1a1a1a; color: #fff; padding: 0.75rem 1.5rem; text-decoration: none; border-radius: 6px; font-weight: 500;">Buka
-                    Website</a>
+            <div class="feature-card">
+                <h3>Merchandise</h3>
+                <p>Custom kaos, mug, dan giftset untuk branding perusahaan Anda.</p>
             </div>
-        </div>
+            <div class="feature-card">
+                <h3>Packaging</h3>
+                <p>Dus kemasan custom yang menarik dan kokoh untuk produk Anda.</p>
+            </div>
+        </section>
     </main>
-    <footer>
-        <p>© 2025 Nama Bisnis Anda</p>
+
+    <footer style="padding: 2rem; color: #999; font-size: 0.875rem;">
+        &copy; 2025 Central Printing. Pusatkan Kebutuhan Cetak Anda.
     </footer>
 </body>
 
