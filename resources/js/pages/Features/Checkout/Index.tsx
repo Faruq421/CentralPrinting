@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useEffect, useMemo, useState } from 'react';
-import { Truck, CreditCard, Banknote, ShieldCheck, ShoppingBag, Loader2, CheckCircle2, Pencil } from 'lucide-react';
+import { Truck, CreditCard, Banknote, ShieldCheck, ShoppingBag, Loader2, CheckCircle2, Pencil, Wallet, Smartphone, QrCode } from 'lucide-react';
 import { toast } from 'sonner';
 
 // Midtrans Snap type declaration
@@ -83,7 +83,40 @@ interface Props {
     paymentMethods: PaymentMethod[];
 }
 
-type CheckoutStep = 'address' | 'shipping';
+// Payment Method Groups for Accordion
+const PAYMENT_GROUPS = [
+    {
+        id: 'bank_transfer',
+        name: 'Transfer Bank (Virtual Account)',
+        icon: 'Banknote',
+        options: [
+            { id: 'bca_va', name: 'BCA Virtual Account' },
+            { id: 'bni_va', name: 'BNI Virtual Account' },
+            { id: 'bri_va', name: 'BRI Virtual Account' },
+            { id: 'permata_va', name: 'Permata Virtual Account' },
+        ]
+    },
+    {
+        id: 'e_wallet',
+        name: 'E-Wallet / QRIS',
+        icon: 'Wallet',
+        options: [
+            { id: 'gopay', name: 'GoPay' },
+            { id: 'shopeepay', name: 'ShopeePay' },
+            { id: 'qris', name: 'QRIS' },
+        ]
+    },
+    {
+        id: 'credit_card_group',
+        name: 'Kartu Kredit / Debit',
+        icon: 'CreditCard',
+        options: [
+            { id: 'credit_card', name: 'Visa / Mastercard / JCB' }
+        ]
+    }
+];
+
+type CheckoutStep = 'address' | 'shipping' | 'payment';
 
 export default function CheckoutPage({ cartItems, subtotal, paymentMethods }: Props) {
     const { auth } = usePage<SharedData>().props;
@@ -130,6 +163,7 @@ export default function CheckoutPage({ cartItems, subtotal, paymentMethods }: Pr
             cost: 0,
             etd: '',
         },
+        payment_method: '',
         selected_items: cartItems.map(item => item.id),
     });
 
@@ -270,9 +304,9 @@ export default function CheckoutPage({ cartItems, subtotal, paymentMethods }: Pr
     const tax = subtotal * 0.11; // 11% tax
     const total = subtotal + shippingCost + tax;
 
-    // Validation for "Pay" button - now only validates address and shipping
+    // Validation for "Pay" button - validates address, shipping, and payment method
     const isFormValid = useMemo(() => {
-        if (step !== 'shipping') return false;
+        if (step !== 'payment') return false;
 
         return (
             data.shipping_address.name?.trim() !== '' &&
@@ -280,7 +314,8 @@ export default function CheckoutPage({ cartItems, subtotal, paymentMethods }: Pr
             data.shipping_address.phone?.trim() !== '' &&
             data.shipping_address.city_id !== 0 &&
             data.shipping_address.province_id !== 0 &&
-            data.shipping_method.cost > 0
+            data.shipping_method.cost > 0 &&
+            data.payment_method !== ''
         );
     }, [data, step]);
 
@@ -396,16 +431,16 @@ export default function CheckoutPage({ cartItems, subtotal, paymentMethods }: Pr
     };
 
     const goToPayment = () => {
-        // Now we skip the payment step and go directly to submit
         if (data.shipping_method.cost === 0) {
             alert("Mohon pilih metode pengiriman.");
             return;
         }
-        // Stay on shipping step, user will click "Bayar Sekarang" button
+        setStep('payment');
     };
 
     const goToAddress = () => setStep('address');
     const goToShippingStep = () => setStep('shipping');
+    const goToPaymentStep = () => setStep('payment');
 
     // Get the payment method icon
     const getPaymentIcon = (methodId: string) => {
@@ -729,9 +764,99 @@ export default function CheckoutPage({ cartItems, subtotal, paymentMethods }: Pr
                                         <p className="text-sm text-destructive font-medium">{errors['shipping_method']}</p>
                                     )}
                                     <Button
+                                        type="button"
+                                        onClick={goToPayment}
+                                        className="w-full mt-4 h-12 text-base font-bold bg-primary hover:bg-primary/90"
+                                        disabled={data.shipping_method.cost === 0}
+                                    >
+                                        Lanjut ke Pembayaran
+                                    </Button>
+                                </CardContent>
+                            )}
+                            {step === 'payment' && (
+                                <CardContent className="pb-6 pt-0">
+                                    <p className="text-sm text-muted-foreground">
+                                        {data.shipping_method.courier} - {data.shipping_method.service} | Rp {data.shipping_method.cost.toLocaleString('id-ID')}
+                                    </p>
+                                </CardContent>
+                            )}
+                        </Card>
+
+
+                        {/* STEP 3: Payment Method */}
+                        <Card className={cn("border transition-all duration-300", step === 'payment' ? "ring-2 ring-primary/20 shadow-md" : "opacity-50 grayscale")}>
+                            <CardHeader className="pb-3">
+                                <CardTitle className="flex justify-between items-center text-lg">
+                                    <span className="flex items-center gap-2">
+                                        <div className={cn("flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold", step === 'payment' ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground")}>3</div>
+                                        Metode Pembayaran
+                                    </span>
+                                    {step !== 'payment' && step !== 'shipping' && step !== 'address' && (
+                                        <Button variant="ghost" size="sm" onClick={goToPaymentStep} type="button" className="text-primary hover:text-primary/80">
+                                            <Pencil className="h-4 w-4 mr-2" /> Ubah
+                                        </Button>
+                                    )}
+                                </CardTitle>
+                            </CardHeader>
+                            {step === 'payment' && (
+                                <CardContent className="space-y-4 animate-in slide-in-from-top-2 duration-300">
+                                    <Accordion type="single" collapsible className="w-full space-y-2">
+                                        {PAYMENT_GROUPS.map((group) => {
+                                            const GroupIcon = group.icon === 'Banknote' ? Banknote :
+                                                group.icon === 'CreditCard' ? CreditCard :
+                                                    group.icon === 'Wallet' ? Wallet :
+                                                        Banknote;
+
+                                            return (
+                                                <AccordionItem key={group.id} value={group.id} className="border rounded-lg px-4 bg-card">
+                                                    <AccordionTrigger className="hover:no-underline py-4">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="p-2 bg-primary/10 rounded-full text-primary">
+                                                                <GroupIcon className="h-5 w-5" />
+                                                            </div>
+                                                            <span className="font-semibold">{group.name}</span>
+                                                        </div>
+                                                    </AccordionTrigger>
+                                                    <AccordionContent className="pt-2 pb-4">
+
+                                                        <RadioGroup
+                                                            value={data.payment_method}
+                                                            onValueChange={(value) => setData('payment_method', value)}
+                                                            className="grid gap-3 pl-2"
+                                                        >
+                                                            {group.options.map((option) => (
+                                                                <div key={option.id} className="relative">
+                                                                    <RadioGroupItem value={option.id} id={option.id} className="peer sr-only" />
+                                                                    <Label
+                                                                        htmlFor={option.id}
+                                                                        className={cn(
+                                                                            "flex items-center space-x-2 border rounded p-3 cursor-pointer w-full transition-all",
+                                                                            "hover:bg-muted/50 border-border",
+                                                                            "peer-data-[state=checked]:bg-primary/5 peer-data-[state=checked]:border-primary peer-data-[state=checked]:ring-1 peer-data-[state=checked]:ring-primary/20"
+                                                                        )}
+                                                                    >
+                                                                        <div className={cn("h-4 w-4 rounded-full border border-primary flex items-center justify-center mr-2",
+                                                                            data.payment_method === option.id ? "bg-primary" : "bg-transparent"
+                                                                        )}>
+                                                                            {data.payment_method === option.id && <div className="h-2 w-2 rounded-full bg-primary-foreground" />}
+                                                                        </div>
+                                                                        <span className="flex-1 font-medium">{option.name}</span>
+                                                                    </Label>
+                                                                </div>
+                                                            ))}
+                                                        </RadioGroup>
+                                                    </AccordionContent>
+                                                </AccordionItem>
+                                            );
+                                        })}
+                                    </Accordion>
+                                    {errors['payment_method'] && (
+                                        <p className="text-sm text-destructive font-medium">{errors['payment_method']}</p>
+                                    )}
+                                    <Button
                                         type="submit"
                                         className="w-full mt-4 h-12 text-base font-bold bg-primary hover:bg-primary/90"
-                                        disabled={data.shipping_method.cost === 0 || isPaymentProcessing}
+                                        disabled={data.payment_method === '' || isPaymentProcessing}
                                     >
                                         {isPaymentProcessing ? (
                                             <>

@@ -132,6 +132,7 @@ class OrderController extends Controller
             'shipping_method.service' => 'required|string',
             'shipping_method.cost' => 'required|integer',
             'shipping_method.etd' => 'nullable|string',
+            'payment_method' => 'required|string|in:bca_va,bni_va,bri_va,permata_va,credit_card,gopay,shopeepay,qris',
             'selected_items' => 'required|array|min:1',
             'selected_items.*' => 'string',
         ]);
@@ -254,10 +255,14 @@ class OrderController extends Controller
                 ];
             }
 
+            // Map payment method to enabled_payments
+            $enabledPayments = [$validated['payment_method']];
+
             $transactionPayload = [
                 'transaction_details' => $transactionDetails,
                 'customer_details' => $customerDetails,
                 'item_details' => $itemDetails,
+                'enabled_payments' => $enabledPayments,
             ];
 
             $snapToken = \Midtrans\Snap::getSnapToken($transactionPayload);
