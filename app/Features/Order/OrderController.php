@@ -454,4 +454,29 @@ class OrderController extends Controller
             'orders' => $orders,
         ]);
     }
+
+    /**
+     * Mark an order as paid (called by frontend after successful Midtrans payment).
+     * This is a fallback for when webhook cannot reach localhost during development.
+     */
+    public function markAsPaid(Order $order)
+    {
+        // Pastikan hanya pemilik pesanan yang bisa memanggil
+        if ($order->user_id !== auth()->id()) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        // Update hanya jika belum paid
+        if ($order->payment_status !== 'paid') {
+            $order->update([
+                'payment_status' => 'paid',
+                'order_status' => 'processing',
+                'payment_time' => now(),
+            ]);
+
+            Log::info('Order marked as paid via frontend callback', ['order_id' => $order->id]);
+        }
+
+        return response()->json(['success' => true]);
+    }
 }

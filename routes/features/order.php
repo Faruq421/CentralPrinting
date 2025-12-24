@@ -19,6 +19,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/my-orders', [OrderController::class, 'myOrders'])
         ->middleware(['auth']) // Pastikan hanya user terotentikasi
         ->name('orders.my');   // Kita beri nama 'orders.my' untuk Ziggy
+    
+    // Route untuk update status pembayaran setelah sukses dari Midtrans
+    Route::post('/orders/{order}/mark-paid', [OrderController::class, 'markAsPaid'])
+        ->name('orders.markPaid');
 });
 
 Route::resource('orders', OrderController::class)->middleware(['auth', 'verified']);

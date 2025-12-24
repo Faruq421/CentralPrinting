@@ -340,8 +340,16 @@ export default function CheckoutPage({ cartItems, subtotal, paymentMethods }: Pr
                 // Open Midtrans Snap popup
                 if (window.snap) {
                     window.snap.pay(snap_token, {
-                        onSuccess: (result: unknown) => {
+                        onSuccess: async (result: unknown) => {
                             console.log('Payment success:', result);
+
+                            // Panggil backend untuk update status pembayaran
+                            try {
+                                await axios.post(route('orders.markPaid', order_id));
+                            } catch (err) {
+                                console.error('Gagal update status pembayaran:', err);
+                            }
+
                             toast.success('Pembayaran berhasil!');
                             router.visit(route('orders.show', order_id));
                         },
