@@ -19,7 +19,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
             <SiteHeader auth={auth} />
 
             {/* 'children' adalah konten halaman spesifik (Welcome, MyOrders, etc.) */}
-            <main className="flex-1">
+            <main className="flex-1 pt-[120px]">
                 {children}
             </main>
 
