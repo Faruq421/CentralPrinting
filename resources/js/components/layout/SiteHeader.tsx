@@ -141,12 +141,12 @@ export default function SiteHeader({ auth }: PageProps) {
                                                         </div>
                                                         <h3 className="font-bold text-gray-900 text-base">{category.title}</h3>
                                                     </div>
-                                                    
+
                                                     <div className="space-y-1">
                                                         {category.items.map((item) => (
-                                                            <Link 
+                                                            <Link
                                                                 key={item}
-                                                                href={route('shop.index', { category: category.title })} 
+                                                                href={route('shop.index', { category: category.title })}
                                                                 className="flex items-center justify-between py-2 px-3 -mx-3 rounded-md text-sm text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-all group/item"
                                                             >
                                                                 <span>{item}</span>
@@ -157,7 +157,7 @@ export default function SiteHeader({ auth }: PageProps) {
                                                 </div>
                                             ))}
                                         </div>
-                                        
+
                                         <div className="mt-8 pt-6 border-t border-gray-100 flex items-center justify-between bg-gray-50/50 -mx-8 -mb-8 px-8 py-4">
                                             <p className="text-sm text-gray-500">Tidak menemukan yang Anda cari?</p>
                                             <Link href={route('shop.index')} className="text-sm font-semibold text-gray-900 hover:text-orange-600 flex items-center gap-2 transition-colors">
@@ -188,21 +188,7 @@ export default function SiteHeader({ auth }: PageProps) {
 
                 {/* Right Actions */}
                 <div className="flex items-center gap-3">
-                    <div className="hidden lg:flex items-center relative group">
-                        <div className={cn(
-                            "flex items-center transition-all duration-300 overflow-hidden bg-gray-100 rounded-full",
-                            "w-10 hover:w-64 focus-within:w-64 cursor-pointer"
-                        )}>
-                            <div className="pl-3 pr-2 py-2 text-gray-500">
-                                <Search className="h-5 w-5" />
-                            </div>
-                            <Input
-                                type="search"
-                                placeholder="Cari stiker, banner..."
-                                className="border-none bg-transparent h-9 px-0 focus-visible:ring-0 placeholder:text-gray-400"
-                            />
-                        </div>
-                    </div>
+
 
                     <div className="h-6 w-px bg-gray-200 mx-1 hidden lg:block"></div>
 
