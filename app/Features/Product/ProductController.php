@@ -57,7 +57,7 @@ class ProductController extends Controller
             ->get();
 
         return Inertia::render('Features/Product/Show', [
-            'product' => $product->load('category', 'attributeValues.attribute', 'designTemplates'),
+            'product' => $product->load('category', 'attributeValues.attribute', 'designTemplates', 'reviews.user'),
             'related_products' => $related_products,
         ]);
     }
@@ -107,7 +107,7 @@ class ProductController extends Controller
 
         // 5. Paginasi (Setelah semua filter & sort)
         // 'withQueryString' sangat penting agar filter tetap ada saat pindah halaman
-        $products = $productsQuery->paginate(6)->withQueryString();
+        $products = $productsQuery->paginate(20)->withQueryString();
 
         // 6. Render Halaman Inertia
         return Inertia::render('Features/Product/ShopPage', [

@@ -5,6 +5,7 @@ import { route } from 'ziggy-js';
 import axios from 'axios';
 import { cn } from '@/lib/utils';
 import { useDropzone } from 'react-dropzone';
+import { motion, Variants } from 'framer-motion';
 
 // --- UI Components ---
 import { toast } from 'sonner';
@@ -17,7 +18,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from "@/components/ui/carousel";
-import { ShoppingCart, Plus, Minus, UploadCloud, X, CheckCircle2, Loader2, RefreshCw } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, UploadCloud, X, CheckCircle2, Loader2, RefreshCw, Star, ArrowRight, NotebookPen } from 'lucide-react';
 
 // --- Tipe Data ---
 interface ProductData {
@@ -32,6 +33,21 @@ interface ProductData {
     design_templates: DesignTemplate[];
     enable_design_feature: boolean;
     category?: { name: string };
+    stok: number;
+    reviews: ReviewData[];
+}
+
+interface ReviewData {
+    id: number;
+    rating: number;
+    comment: string;
+    photos: string[] | null;
+    created_at: string;
+    user: {
+        id: number;
+        name: string;
+        avatar?: string;
+    };
 }
 
 interface AttributeValue {
@@ -64,16 +80,15 @@ interface ProductQuickViewProps {
 }
 
 // --- Komponen Galeri Internal ---
-const ProductGallery = ({ product, onTemplateSelect, selectedTemplateId }: {
+const ProductGallery = ({ product }: {
     product: ProductData;
-    onTemplateSelect: (index: number) => void;
-    selectedTemplateId: number | null;
 }) => {
     const [api, setApi] = useState<CarouselApi>();
     const [current, setCurrent] = useState(0);
 
     const galleryItems: GalleryItem[] = useMemo(() => {
-        const items: GalleryItem[] = [{ type: 'image', thumb: product.gambar_url, full: product.gambar_url, id: 'main' }];
+        const items: GalleryItem[] = [];
+        if (product.gambar_url) items.push({ type: 'image', thumb: product.gambar_url, full: product.gambar_url, id: 'main' });
         (product.design_templates || []).forEach(tmpl => items.push({ type: 'template', thumb: `/storage/${tmpl.thumbnail_path}`, full: `/storage/${tmpl.thumbnail_path}`, id: tmpl.id }));
         return items;
     }, [product]);
@@ -86,44 +101,47 @@ const ProductGallery = ({ product, onTemplateSelect, selectedTemplateId }: {
 
     const handleThumbClick = (index: number) => {
         api?.scrollTo(index);
-        const item = galleryItems[index];
-        if (item.type === 'template') {
-            onTemplateSelect(index);
-        }
     };
 
-    useEffect(() => {
-        if (selectedTemplateId !== null) {
-            const index = galleryItems.findIndex(item => item.type === 'template' && item.id === selectedTemplateId);
-            if (index !== -1 && index !== current) {
-                api?.scrollTo(index);
-            }
-        }
-    }, [selectedTemplateId, galleryItems, api, current]);
-
+    if (galleryItems.length === 0) return null;
 
     return (
         <div className="flex flex-col gap-4">
-            <Carousel setApi={setApi} className="w-full">
-                <CarouselContent>
-                    {galleryItems.map((item, index) => (
-                        <CarouselItem key={index} className="aspect-square">
-                            <div className="w-full h-full overflow-hidden rounded-2xl border bg-white flex items-center justify-center">
-                                <img src={item.full} alt={`${product.nama_produk} - Gambar ${index + 1}`} className="h-full w-full object-cover" />
-                            </div>
-                        </CarouselItem>
-                    ))}
-                </CarouselContent>
-                <CarouselPrevious className="left-4" />
-                <CarouselNext className="right-4" />
-            </Carousel>
-            <div className="grid grid-cols-5 gap-3">
-                {galleryItems.map((item, index) => (
-                    <button key={index} onClick={() => handleThumbClick(index)} className={cn("overflow-hidden rounded-lg aspect-square border-2 transition-all", current === index ? "border-orange-500" : "border-transparent hover:border-gray-300")}>
-                        <img src={item.thumb} alt={`Thumbnail ${index + 1}`} className="h-full w-full object-cover" />
-                    </button>
-                ))}
+            <div className="relative overflow-hidden rounded-xl bg-gray-100 border border-gray-100 dark:bg-gray-800 dark:border-gray-700">
+                <Carousel setApi={setApi} className="w-full">
+                    <CarouselContent>
+                        {galleryItems.map((item, index) => (
+                            <CarouselItem key={index} className="aspect-square">
+                                <div className="flex h-full w-full items-center justify-center p-2">
+                                    <img src={item.full} alt={`${product.nama_produk} ${index + 1}`} className="max-h-full max-w-full object-contain mix-blend-multiply dark:mix-blend-normal" />
+                                </div>
+                            </CarouselItem>
+                        ))}
+                    </CarouselContent>
+                    {galleryItems.length > 1 && (
+                        <>
+                            <CarouselPrevious className="left-4 h-8 w-8 bg-white/80 hover:bg-white text-gray-800 shadow-sm backdrop-blur-sm" />
+                            <CarouselNext className="right-4 h-8 w-8 bg-white/80 hover:bg-white text-gray-800 shadow-sm backdrop-blur-sm" />
+                        </>
+                    )}
+                </Carousel>
             </div>
+            {galleryItems.length > 1 && (
+                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                    {galleryItems.map((item, index) => (
+                        <button
+                            key={index}
+                            onClick={() => handleThumbClick(index)}
+                            className={cn(
+                                "relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg border-2 transition-all bg-white dark:bg-gray-800",
+                                current === index ? "border-orange-500 ring-2 ring-orange-200 ring-offset-1" : "border-gray-100 hover:border-gray-300 dark:border-gray-700"
+                            )}
+                        >
+                            <img src={item.thumb} alt={`Thumbnail ${index + 1}`} className="h-full w-full object-cover" />
+                        </button>
+                    ))}
+                </div>
+            )}
         </div>
     );
 };
@@ -280,241 +298,316 @@ export function ProductQuickView({ productSlug, cartItemId, isOpen, onClose }: P
         return "";
     };
 
-    const handleAddToCart = () => {
+    const handleSubmit = () => {
         if (!product) return;
 
         setIsSubmitting(true);
 
-        // Siapkan data untuk add to cart
-        const addData = {
+        const data: any = {
             product_id: product.id_produk,
             quantity: quantity,
             variant: selectedOptions,
             note: note,
-            design: null as { type: string; value: number | File } | null,
+            design: null,
         };
 
-        // Handle design data
         if (selectedTemplate) {
-            addData.design = { type: 'template', value: selectedTemplate.id };
+            data.design = { type: 'template', value: selectedTemplate.id };
         } else if (uploadedFile) {
-            addData.design = { type: 'upload', value: uploadedFile };
+            data.design = { type: 'upload', value: uploadedFile };
+        } else if (isEditMode && existingDesign) {
+            data.design = { type: 'upload', value: existingDesign.value, original_filename: existingDesign.original_filename };
         }
 
-        // Use router.post with forceFormData to handle file uploads without page reload
-        router.post(route('cart.store'), addData, {
+        if (isEditMode) {
+            data._method = 'PATCH';
+        }
+
+        const routeName = isEditMode ? 'cart.update' : 'cart.store';
+        const routeParams = isEditMode ? { cartItemId } : {};
+
+        router.post(route(routeName, routeParams), data, {
             forceFormData: true,
             preserveScroll: true,
             preserveState: true,
             onSuccess: () => {
-                toast.success(`${product.nama_produk} berhasil ditambahkan.`);
-                setIsSubmitting(false);
-                onClose(); // Tutup modal setelah berhasil
-            },
-            onError: (errors) => {
-                console.error("Cart Add Error:", errors);
-                toast.error('Gagal menambahkan produk, periksa kembali pilihan Anda.');
-                setIsSubmitting(false);
-            },
-        });
-    };
-
-    const handleUpdateCart = () => {
-        if (!cartItemId || !product) return;
-
-        setIsSubmitting(true);
-
-        // Siapkan data untuk update menggunakan router.post dengan method spoofing
-        const updateData = {
-            _method: 'PATCH' as const, // Method spoofing untuk Laravel
-            product_id: product.id_produk,
-            quantity: quantity,
-            variant: selectedOptions,
-            note: note,
-            design: null as { type: string; value: number | File | string; original_filename?: string } | null,
-        };
-
-        // Handle design data
-        if (selectedTemplate) {
-            updateData.design = { type: 'template', value: selectedTemplate.id };
-        } else if (uploadedFile) {
-            updateData.design = { type: 'upload', value: uploadedFile };
-        } else if (existingDesign) {
-            updateData.design = { type: 'upload', value: existingDesign.value, original_filename: existingDesign.original_filename };
-        }
-
-        // Gunakan router.post dengan method spoofing untuk menangani file upload
-        router.post(route('cart.update', { cartItemId }), updateData, {
-            forceFormData: true,
-            preserveScroll: true,
-            preserveState: true,
-            onSuccess: () => {
-                toast.success('Keranjang berhasil diperbarui.');
+                toast.success(isEditMode ? 'Keranjang berhasil diperbarui.' : `${product.nama_produk} berhasil ditambahkan.`);
                 setIsSubmitting(false);
                 onClose();
             },
             onError: (errors) => {
-                console.error("Cart Update Error:", errors);
-                toast.error('Gagal memperbarui keranjang.');
+                console.error("Cart Action Error:", errors);
+                toast.error(isEditMode ? 'Gagal memperbarui keranjang.' : 'Gagal menambahkan produk, periksa kembali pilihan Anda.');
                 setIsSubmitting(false);
             },
         });
     };
 
-    return (
-        <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader className="sr-only">
-                    <DialogTitle>Detail Cepat Produk</DialogTitle>
-                    <DialogDescription>Tampilan detail cepat untuk melihat dan mengkonfigurasi produk sebelum ditambahkan ke keranjang.</DialogDescription>
-                </DialogHeader>
-                {isLoading && (
-                    <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-10 rounded-lg">
-                        <Loader2 className="h-12 w-12 animate-spin text-orange-500" />
-                    </div>
-                )}
-                {product && (
-                    <>
-                        <DialogHeader>
-                            {/* Visually hidden title and description for accessibility */}
-                            <DialogTitle className="sr-only">{product.nama_produk}</DialogTitle>
-                            <DialogDescription className="sr-only">
-                                Detail produk dan opsi untuk {product.nama_produk}. Ubah varian, jumlah, dan tambahkan desain kustom sebelum memasukkan ke keranjang.
-                            </DialogDescription>
-                            <h2 className="text-2xl font-bold">{product.nama_produk}</h2>
-                        </DialogHeader>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 py-4">
-                            {/* Kolom Kiri: Galeri */}
-                            <ProductGallery product={product} onTemplateSelect={(index) => {
-                                const tmpl = product.design_templates[index - 1];
-                                if (tmpl) handleSelectTemplate(tmpl);
-                            }} selectedTemplateId={selectedTemplate?.id ?? null} />
+    // --- Logika Render Konten Dialog ---
+    const renderContent = () => {
+        if (isLoading) {
+            return (
+                <div className="flex h-96 w-full items-center justify-center">
+                    <Loader2 className="h-12 w-12 animate-spin text-orange-500" />
+                </div>
+            );
+        }
 
-                            {/* Kolom Kanan: Opsi & Aksi */}
-                            <div className="flex flex-col space-y-4">
-                                <p className="font-semibold uppercase tracking-wide text-orange-500">{product.category?.name ?? 'Uncategorized'}</p>
+        if (!product) {
+            return (
+                <div className="flex h-96 w-full flex-col items-center justify-center gap-4 text-center">
+                    <p className="text-gray-500">Produk tidak ditemukan atau gagal dimuat.</p>
+                    <Button onClick={onClose} variant="outline">Tutup</Button>
+                </div>
+            )
+        }
 
-                                {/* Opsi Atribut */}
-                                {Object.entries(attributeGroups).map(([name, values]) => (
-                                    <div key={name}>
-                                        <Label className='text-md mb-2 block font-semibold'>{name}</Label>
-                                        <RadioGroup onValueChange={(valueId) => handleOptionChange(values[0].attribute.id.toString(), Number(valueId))} value={selectedOptions[values[0].attribute.id]?.toString() || ''} className='flex flex-wrap gap-2'>
-                                            {values.map((value) => (
-                                                <Label key={value.id} htmlFor={`modal_attr_${value.id}`} className="flex cursor-pointer items-center gap-3 rounded-lg border bg-white px-3 py-2 text-sm transition-all hover:bg-gray-100 has-[:checked]:border-orange-500 has-[:checked]:bg-orange-50">
-                                                    <RadioGroupItem value={value.id.toString()} id={`modal_attr_${value.id}`} />
-                                                    {value.value}
-                                                    {value.pivot.price > 0 && <span className='text-xs text-gray-500'>(+Rp {value.pivot.price.toLocaleString('id-ID')})</span>}
-                                                </Label>
-                                            ))}
-                                        </RadioGroup>
+        // --- Variant Logic ---
+        const attributeGroups = (product.attribute_values || []).reduce((acc, value) => {
+            const { name } = value.attribute;
+            if (!acc[name]) acc[name] = [];
+            acc[name].push(value);
+            return acc;
+        }, {} as Record<string, AttributeValue[]>);
+
+        const hasAttributes = Object.keys(attributeGroups).length > 0;
+        const areAllOptionsSelected = hasAttributes ? Object.keys(selectedOptions).length === Object.keys(attributeGroups).length : true;
+
+        const isDesignSelected = !product?.enable_design_feature ||
+            !!selectedTemplate ||
+            !!uploadedFile ||
+            !!existingDesign;
+
+        const isActionDisabled = !areAllOptionsSelected || !isDesignSelected || isSubmitting;
+
+        return (
+            <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-10 h-full overflow-y-auto p-1">
+                {/* Kolom Kiri: Galeri */}
+                <div>
+                    <ProductGallery product={product} />
+                </div>
+
+                {/* Kolom Kanan: Detail & Form */}
+                <div className="space-y-6">
+                    {/* Header */}
+                    <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                            <span className="inline-flex items-center rounded-full bg-orange-100 px-2.5 py-0.5 text-xs font-semibold text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
+                                {product.category?.name ?? 'Uncategorized'}
+                            </span>
+                        </div>
+                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white sm:text-3xl leading-tight">{product.nama_produk}</h2>
+
+                        <div className="flex items-center gap-4">
+                            <h3 className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+                                Rp {totalPrice.toLocaleString('id-ID')}
+                            </h3>
+                            {product.reviews && product.reviews.length > 0 && (
+                                <div className="flex items-center gap-2 pl-4 border-l border-gray-200 dark:border-gray-700">
+                                    <span className="text-base font-bold text-gray-900 dark:text-gray-100">
+                                        {(product.reviews.reduce((acc, r) => acc + r.rating, 0) / product.reviews.length).toFixed(1)}
+                                    </span>
+                                    <div className="flex items-center gap-0.5">
+                                        <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
                                     </div>
-                                ))}
-
-                                {/* Opsi Desain */}
-                                {product.enable_design_feature && (
-                                    <div>
-                                        <Label className="text-md mb-2 block font-semibold">Opsi Desain</Label>
-                                        <Tabs defaultValue={product.design_templates?.length > 0 ? "template" : "upload"} className="w-full">
-                                            <TabsList className={cn("grid w-full", product.allow_custom_design && product.design_templates?.length > 0 ? "grid-cols-2" : "grid-cols-1")}>
-                                                {product.design_templates?.length > 0 && <TabsTrigger value="template">Pilih Template</TabsTrigger>}
-                                                {product.allow_custom_design && <TabsTrigger value="upload">Unggah Desain</TabsTrigger>}
-                                            </TabsList>
-
-                                            {product.design_templates?.length > 0 && (
-                                                <TabsContent value="template" className="mt-4 p-1">
-                                                    <p className="text-sm text-gray-600 mb-3">Pilih salah satu template desain yang tersedia:</p>
-                                                    <div className='grid grid-cols-4 gap-3'>
-                                                        {product.design_templates.map(template => (
-                                                            <div key={template.id} className="relative group">
-                                                                <button onClick={() => handleSelectTemplate(template)} className={cn('overflow-hidden rounded-lg aspect-square border-2 transition-all w-full block', selectedTemplate?.id === template.id ? 'border-orange-500 ring-2 ring-orange-300' : 'border-gray-200 hover:border-orange-400')}>
-                                                                    <img src={`/storage/${template.thumbnail_path}`} alt={template.name} className='aspect-square w-full object-cover group-hover:scale-110 transition-transform' />
-                                                                </button>
-                                                                {selectedTemplate?.id === template.id && <div className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-orange-500 text-white border-2 border-white"><CheckCircle2 className="h-4 w-4" /></div>}
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </TabsContent>
-                                            )}
-
-                                            {product.allow_custom_design && (
-                                                <TabsContent value="upload" className="mt-4 p-1">
-                                                    {uploadedFile ? (
-                                                        <div className='relative w-full rounded-lg border-2 border-dashed border-green-500 bg-green-50 p-4 text-center'>
-                                                            <div className="flex items-center gap-3">
-                                                                <img src={previewUrl!} alt="Preview" className='h-16 w-16 rounded-md object-cover border' />
-                                                                <div className="text-left">
-                                                                    <p className='font-semibold text-green-800'>File Terpilih:</p>
-                                                                    <p className='truncate text-sm text-gray-700' title={uploadedFile.name}>{uploadedFile.name}</p>
-                                                                    <p className="text-xs text-gray-500">{Math.round(uploadedFile.size / 1024)} KB</p>
-                                                                </div>
-                                                            </div>
-                                                            <Button variant="ghost" size="icon" className='absolute top-1 right-1 h-7 w-7 text-gray-500 hover:text-red-600' onClick={removeUploadedFile}><X className='h-5 w-5' /></Button>
-                                                        </div>
-                                                    ) : existingDesign ? (
-                                                        <div className='relative w-full rounded-lg border-2 border-dashed border-blue-500 bg-blue-50 p-4 text-center'>
-                                                            <div className="flex items-center gap-3">
-                                                                <img src={`/storage/${existingDesign.value}`} alt="Desain saat ini" className='h-16 w-16 rounded-md object-cover border' />
-                                                                <div className="text-left">
-                                                                    <p className='font-semibold text-blue-800'>Desain Saat Ini:</p>
-                                                                    <p className='truncate text-sm text-gray-700' title={existingDesign.original_filename}>{existingDesign.original_filename}</p>
-                                                                </div>
-                                                            </div>
-                                                            <Button variant="ghost" size="icon" className='absolute top-1 right-1 h-7 w-7 text-gray-500 hover:text-red-600' title="Hapus & ganti desain" onClick={() => setExistingDesign(null)}><X className='h-5 w-5' /></Button>
-                                                        </div>
-                                                    ) : (
-                                                        <div {...getRootProps()} className={cn('flex h-40 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed transition-colors', isDragActive ? 'border-orange-500 bg-orange-50' : 'border-gray-300 hover:border-orange-400 hover:bg-gray-50')}>
-                                                            <input {...getInputProps()} />
-                                                            <div className="text-center">
-                                                                <UploadCloud className='h-10 w-10 text-gray-400 mx-auto' />
-                                                                <p className='mt-2 font-semibold text-gray-700'>Seret & lepas file Anda</p>
-                                                                <p className="text-xs text-gray-500 mt-1">atau klik untuk memilih file (PNG, JPG, dll)</p>
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </TabsContent>
-                                            )}
-                                        </Tabs>
-                                    </div>
-                                )}
-
-                                {/* Kuantitas & Catatan */}
-                                <div className="space-y-4 pt-2">
-                                    <div>
-                                        <Label htmlFor="quantity_modal" className="text-md mb-2 block font-semibold">Jumlah</Label>
-                                        <div className="relative flex h-10 w-32 items-center rounded-lg border">
-                                            <Button variant="outline" size="icon" onClick={() => setQuantity(q => Math.max(1, q - 1))} className="h-full rounded-r-none"><Minus className="h-4 w-4" /></Button>
-                                            <Input id="quantity_modal" type="number" value={quantity} onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))} className="h-full w-full border-x border-y-0 bg-transparent p-0 text-center font-bold focus-visible:ring-0 focus-visible:ring-offset-0" />
-                                            <Button variant="outline" size="icon" onClick={() => setQuantity(q => q + 1)} className="h-full rounded-l-none"><Plus className="h-4 w-4" /></Button>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <Label htmlFor="note_modal" className="text-md mb-2 block font-semibold">Catatan (Opsional)</Label>
-                                        <Textarea id="note_modal" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Tulis catatan untuk pesanan Anda di sini..." className="w-full" rows={2} />
-                                    </div>
+                                    <span className="text-sm text-gray-500">({product.reviews.length} ulasan)</span>
                                 </div>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="h-px w-full bg-gray-100 dark:bg-gray-700 my-4" />
+
+                    {/* Attribute Selection */}
+                    {hasAttributes && (
+                        <div className="space-y-5">
+                            {(Object.entries(attributeGroups) as [string, AttributeValue[]][]).map(([name, values]) => (
+                                <div key={name} className="space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <Label className='text-sm font-semibold text-gray-900 dark:text-gray-100'>
+                                            {name}
+                                            {selectedOptions[values[0].attribute.id] && (
+                                                <span className="ml-2 text-orange-600 font-medium">
+                                                    : {values.find(v => v.id === selectedOptions[values[0].attribute.id])?.value}
+                                                </span>
+                                            )}
+                                        </Label>
+                                    </div>
+                                    <RadioGroup onValueChange={(valueId) => handleOptionChange(values[0].attribute.id.toString(), Number(valueId))} className='flex flex-wrap gap-2'>
+                                        {values.map((value) => {
+                                            const isSelected = selectedOptions[values[0].attribute.id] === value.id;
+                                            return (
+                                                <Label
+                                                    key={value.id}
+                                                    htmlFor={`quick_attr_${value.id}`}
+                                                    className={cn(
+                                                        "group relative flex cursor-pointer items-center justify-center rounded-lg border px-4 py-2 text-sm font-medium transition-all",
+                                                        isSelected
+                                                            ? "border-orange-500 bg-orange-50 text-orange-700 ring-1 ring-orange-500 dark:bg-orange-950/30 dark:text-orange-400"
+                                                            : "border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 dark:hover:border-gray-600"
+                                                    )}
+                                                >
+                                                    <RadioGroupItem value={value.id.toString()} id={`quick_attr_${value.id}`} className="sr-only" />
+                                                    {value.value}
+                                                    {value.pivot.price > 0 && (
+                                                        <span className="ml-1 text-xs opacity-70">
+                                                            (+{value.pivot.price.toLocaleString('id-ID')})
+                                                        </span>
+                                                    )}
+                                                </Label>
+                                            );
+                                        })}
+                                    </RadioGroup>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Design Section */}
+                    {product.enable_design_feature && (
+                        <div className="space-y-3 p-4 rounded-xl border border-gray-100 bg-gray-50/50 dark:bg-gray-800/20 dark:border-gray-700">
+                            <Label className="text-sm font-semibold text-gray-900 dark:text-gray-100">Personalisasi Desain</Label>
+                            <Tabs defaultValue={existingDesign ? "upload" : (product.design_templates?.length > 0 ? "template" : "upload")} className="w-full">
+                                <TabsList className={cn("grid w-full h-9 p-1 bg-gray-200/50 dark:bg-gray-800 rounded-lg", (product.design_templates?.length > 0 && product.allow_custom_design) ? "grid-cols-2" : "grid-cols-1")}>
+                                    {product.design_templates?.length > 0 && <TabsTrigger value="template" className="rounded-md text-xs data-[state=active]:bg-white data-[state=active]:text-orange-600 data-[state=active]:shadow-sm">Template</TabsTrigger>}
+                                    {product.allow_custom_design && <TabsTrigger value="upload" className="rounded-md text-xs data-[state=active]:bg-white data-[state=active]:text-orange-600 data-[state=active]:shadow-sm">Upload File</TabsTrigger>}
+                                </TabsList>
+
+                                <div className="mt-3">
+                                    {product.design_templates?.length > 0 && (
+                                        <TabsContent value="template" className="mt-0 space-y-2">
+                                            <div className="grid grid-cols-4 gap-2 max-h-[160px] overflow-y-auto p-1 custom-scrollbar">
+                                                {product.design_templates.map(template => (
+                                                    <button key={template.id} onClick={() => handleSelectTemplate(template)} className={cn('overflow-hidden rounded-md aspect-square border-2 transition-all w-full relative group', selectedTemplate?.id === template.id ? 'border-orange-500 ring-2 ring-orange-200' : 'border-transparent hover:border-gray-200')}>
+                                                        <img src={`/storage/${template.thumbnail_path}`} alt={template.name} className='aspect-square w-full object-cover' />
+                                                        {selectedTemplate?.id === template.id && (
+                                                            <div className="absolute inset-0 bg-orange-500/20 flex items-center justify-center">
+                                                                <div className="bg-orange-500 text-white rounded-full p-0.5"><CheckCircle2 className="h-3 w-3" /></div>
+                                                            </div>
+                                                        )}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                            {selectedTemplate && <p className="text-xs text-orange-600 font-medium">Terpilih: {selectedTemplate.name}</p>}
+                                        </TabsContent>
+                                    )}
+
+                                    {product.allow_custom_design && (
+                                        <TabsContent value="upload" className="mt-0">
+                                            {isEditMode && existingDesign && !uploadedFile && !selectedTemplate ? (
+                                                <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-100 rounded-lg dark:bg-blue-900/20 dark:border-blue-800">
+                                                    <div className="flex items-center gap-3 overflow-hidden">
+                                                        <div className="h-10 w-10 flex-shrink-0 rounded bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs uppercase">
+                                                            FILE
+                                                        </div>
+                                                        <div className="min-w-0">
+                                                            <p className="text-sm font-medium text-blue-900 dark:text-blue-100 truncate">{existingDesign.original_filename}</p>
+                                                            <p className="text-xs text-blue-600 dark:text-blue-300">File saat ini</p>
+                                                        </div>
+                                                    </div>
+                                                    <Button variant="ghost" size="sm" onClick={() => setExistingDesign(null)} className="h-8 w-8 p-0 text-blue-600 hover:bg-blue-100"><RefreshCw className="h-4 w-4" /></Button>
+                                                </div>
+                                            ) : uploadedFile ? (
+                                                <div className='relative w-full rounded-lg border border-dashed border-green-500 bg-green-50/50 p-3 flex items-center gap-3'>
+                                                    <img src={previewUrl!} alt="Preview" className='h-12 w-12 object-contain rounded bg-white' />
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className='text-sm font-medium text-green-700 truncate'>{uploadedFile.name}</p>
+                                                        <p className='text-xs text-green-600'>Siap unggah</p>
+                                                    </div>
+                                                    <Button variant="ghost" size="icon" className='h-8 w-8 text-green-600 hover:bg-green-100' onClick={removeUploadedFile}><X className='h-4 w-4' /></Button>
+                                                </div>
+                                            ) : (
+                                                <div {...getRootProps()} className={cn('flex h-28 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed transition-all hover:bg-gray-50', isDragActive ? 'border-orange-500 bg-orange-50' : 'border-gray-200 dark:border-gray-700')}>
+                                                    <input {...getInputProps()} />
+                                                    <UploadCloud className='h-8 w-8 text-gray-400 group-hover:text-orange-500' />
+                                                    <p className='mt-2 text-xs text-gray-500 text-center'>Klik / Drop file di sini</p>
+                                                </div>
+                                            )}
+                                        </TabsContent>
+                                    )}
+                                </div>
+                            </Tabs>
+                        </div>
+                    )}
+
+                    {/* Quantity & Action */}
+                    <div className="flex items-end gap-4 pt-2">
+                        <div className="space-y-1.5">
+                            <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">Jumlah</Label>
+                            <div className="flex items-center rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900 shadow-sm h-11 w-fit">
+                                <Button variant="ghost" size="icon" onClick={() => setQuantity(q => Math.max(1, q - 1))} className="h-full w-10 rounded-l-lg text-gray-500 hover:text-orange-600"><Minus className="h-4 w-4" /></Button>
+                                <Input
+                                    type="number"
+                                    value={quantity}
+                                    max={product.stok}
+                                    onChange={(e) => setQuantity(Math.min(product.stok, Math.max(1, parseInt(e.target.value) || 1)))}
+                                    className="h-full w-12 border-none bg-transparent p-0 text-center font-bold focus-visible:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                />
+                                <Button variant="ghost" size="icon" onClick={() => setQuantity(q => Math.min(product.stok, q + 1))} className="h-full w-10 rounded-r-lg text-gray-500 hover:text-orange-600"><Plus className="h-4 w-4" /></Button>
                             </div>
                         </div>
-                        <DialogFooter className="flex-col-reverse sm:flex-row sm:justify-between sm:space-x-2 border-t pt-4 mt-4">
-                            <div className="text-left">
-                                <span className="text-sm text-gray-500">Total Harga</span>
-                                <p className="text-2xl font-bold">Rp {totalPrice.toLocaleString('id-ID')}</p>
-                            </div>
-                            <TooltipProvider delayDuration={100}>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <div className="w-full sm:w-auto">
-                                            <Button size="lg" onClick={isEditMode ? handleUpdateCart : handleAddToCart} disabled={isEditMode ? isSubmitting : isActionDisabled} className="w-full bg-[#FF6500] py-6 text-lg text-white shadow-lg transition-transform duration-200 hover:scale-105 hover:bg-[#FF6500]/90 disabled:cursor-not-allowed disabled:bg-gray-400">
-                                                {isEditMode ? <RefreshCw className="mr-3 h-6 w-6" /> : <ShoppingCart className="mr-3 h-6 w-6" />}
-                                                {isEditMode ? 'Rubah Pesanan' : 'Tambah ke Keranjang'}
-                                            </Button>
-                                        </div>
-                                    </TooltipTrigger>
-                                    {isActionDisabled && <TooltipContent><p>{getTooltipMessage()}</p></TooltipContent>}
-                                </Tooltip>
-                            </TooltipProvider>
-                        </DialogFooter>
-                    </>
-                )}
+
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <div className="flex-1">
+                                        <Button
+                                            onClick={handleSubmit}
+                                            disabled={isActionDisabled}
+                                            className="w-full h-11 bg-orange-600 hover:bg-orange-700 text-white font-bold text-base shadow-sm disabled:opacity-70"
+                                        >
+                                            {isSubmitting ? (
+                                                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Memproses...</>
+                                            ) : isEditMode ? (
+                                                "Simpan Perubahan"
+                                            ) : (
+                                                "Tambah ke Keranjang"
+                                            )}
+                                        </Button>
+                                    </div>
+                                </TooltipTrigger>
+                                {isActionDisabled && <TooltipContent><p>{getTooltipMessage()}</p></TooltipContent>}
+                            </Tooltip>
+                        </TooltipProvider>
+                    </div>
+
+                    {/* Simple Note Input */}
+                    <div className="space-y-3 pt-4 border-t border-gray-100 dark:border-gray-700">
+                        <div className="flex items-center gap-2">
+                            <NotebookPen className="h-4 w-4 text-orange-500" />
+                            <Label htmlFor="note_modal" className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                                Catatan Pesanan
+                                <span className="ml-1 text-xs font-normal text-gray-500">(Opsional)</span>
+                            </Label>
+                        </div>
+                        <div className="relative">
+                            <Textarea
+                                id="note_modal"
+                                value={note}
+                                onChange={(e) => setNote(e.target.value)}
+                                placeholder="Tulis detail khusus atau instruksi pengemasan..."
+                                className="min-h-[80px] w-full resize-none rounded-xl border-gray-200 bg-gray-50/50 p-4 text-sm transition-all focus:border-orange-500 focus:bg-white focus:ring-2 focus:ring-orange-200 dark:bg-gray-800 dark:border-gray-700"
+                            />
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        );
+    };
+
+    return (
+        <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-6">
+                <DialogHeader className="sr-only">
+                    <DialogTitle>Detail Cepat Produk</DialogTitle>
+                </DialogHeader>
+                <div className="absolute right-4 top-4 z-50">
+                    <button onClick={onClose} className="rounded-full bg-gray-100 p-2 text-gray-500 hover:bg-gray-200 transition-colors">
+                        <X className="h-4 w-4" />
+                    </button>
+                </div>
+                {renderContent()}
             </DialogContent>
         </Dialog>
     );

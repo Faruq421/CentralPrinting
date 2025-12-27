@@ -24,6 +24,10 @@ Route::prefix('cart')->name('cart.')->group(function () {
 Route::get('/produk-jasa', [ProductController::class, 'shopIndex'])
      ->name('shop.index');
 
+// Rute untuk Portofolio
+Route::get('/portfolio', [\App\Features\Portfolio\PortfolioController::class, 'index'])
+    ->name('portfolio.index');
+
 // Rute khusus Admin
 Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/dashboard', function () {

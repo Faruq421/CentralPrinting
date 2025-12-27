@@ -137,7 +137,7 @@ export default function SiteHeader({ auth }: PageProps) {
                                                 <div key={category.title} className="group cursor-pointer">
                                                     <div className="flex items-center gap-3 mb-4 p-2 -ml-2 rounded-lg group-hover:bg-gray-50 transition-colors">
                                                         <div className="p-2.5 bg-orange-50 rounded-lg text-orange-600 group-hover:bg-orange-600 group-hover:text-white transition-all shadow-sm">
-                                                            {React.cloneElement(category.icon as React.ReactElement, { className: "h-5 w-5" })}
+                                                            {React.cloneElement(category.icon as React.ReactElement<{ className?: string }>, { className: "h-5 w-5" })}
                                                         </div>
                                                         <h3 className="font-bold text-gray-900 text-base">{category.title}</h3>
                                                     </div>
@@ -170,7 +170,7 @@ export default function SiteHeader({ auth }: PageProps) {
                             </NavigationMenuItem>
                             <NavigationMenuItem>
                                 <NavigationMenuLink asChild>
-                                    <Link href="#" className={cn(navigationMenuTriggerStyle(), "bg-transparent text-gray-700 hover:text-orange-600 font-medium")}>
+                                    <Link href={route('portfolio.index')} className={cn(navigationMenuTriggerStyle(), "bg-transparent hover:bg-transparent hover:text-orange-600 font-medium", route().current('portfolio.index') ? "text-orange-600 font-bold" : "text-gray-700")}>
                                         Portofolio
                                     </Link>
                                 </NavigationMenuLink>
@@ -294,9 +294,9 @@ export default function SiteHeader({ auth }: PageProps) {
                                         </div>
 
                                         <Link
-                                            href="#"
+                                            href={route('portfolio.index')}
                                             onClick={() => setIsMobileMenuOpen(false)}
-                                            className="block py-4 text-lg font-semibold text-gray-900 border-b border-gray-100"
+                                            className={cn("block py-4 text-lg font-semibold border-b border-gray-100", route().current('portfolio.index') ? "text-orange-600" : "text-gray-900")}
                                         >
                                             Portofolio
                                         </Link>

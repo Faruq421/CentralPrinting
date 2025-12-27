@@ -1,6 +1,5 @@
 import React from 'react';
 import { Head, usePage } from '@inertiajs/react';
-import { useInView } from '@/hooks/useInView';
 
 // Import layout utama
 import SiteLayout from '@/layouts/SiteLayout';
@@ -17,20 +16,26 @@ interface Product {
     nama_produk: string;
     slug: string; // Pastikan slug ada di sini
     harga: number;
+    gambar: string;
     gambar_url: string;
     category: {
         name: string;
     };
 }
 
+// Definisikan tipe data Category
+interface Category {
+    id: number;
+    name: string;
+}
+
 // Gunakan tipe Product yang sudah didefinisikan
 export default function Welcome() {
-    const { products } = usePage<{ products: Product[] }>().props;
-
-    const [heroRef, heroInView] = useInView({ threshold: 0.2 });
-    const [featuresRef, featuresInView] = useInView({ threshold: 0.2 });
-    const [categoriesRef, categoriesInView] = useInView({ threshold: 0.2 });
-    const [collectionRef, collectionInView] = useInView({ threshold: 0.2 });
+    const { products, featuredProducts, categories } = usePage<{
+        products: Product[],
+        featuredProducts: Product[],
+        categories: Category[]
+    }>().props;
 
     return (
         <SiteLayout>
@@ -42,13 +47,11 @@ export default function Welcome() {
             */}
             <div className="bg-gray-50 text-gray-800 font-sans">
                 <main>
-                    <div ref={heroRef}><HeroSection isInView={heroInView} /></div>
-                    <div ref={featuresRef}><FeaturesSection isInView={featuresInView} /></div>
-                    <div ref={categoriesRef}><CategoriesSection isInView={categoriesInView} /></div>
+                    <HeroSection featuredProducts={featuredProducts} />
+                    <FeaturesSection />
+                    <CategoriesSection categories={categories} />
                     {/* Kirim prop 'products' ke CollectionSection */}
-                    <div ref={collectionRef}>
-                        <CollectionSection isInView={collectionInView} products={products} />
-                    </div>
+                    <CollectionSection products={products} />
                 </main>
             </div>
         </SiteLayout>

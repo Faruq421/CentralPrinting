@@ -3,31 +3,71 @@ import { Button } from '@/components/ui/button';
 import { Link } from '@inertiajs/react';
 import { route } from 'ziggy-js';
 import { ProductCard } from '@/components/ProductCard';
+import { ProductQuickView } from '@/components/ProductQuickView';
+import { motion } from 'framer-motion';
 
 interface Product {
     id_produk: number;
     nama_produk: string;
     slug: string;
     harga: number;
-    gambar_url: string;
+    gambar_url?: string;
+    gambar?: string;
     category: {
         name: string;
     };
 }
 
 interface CollectionSectionProps {
-    isInView: boolean;
     products: Product[];
 }
 
-export default function CollectionSection({ isInView, products }: CollectionSectionProps) {
+export default function CollectionSection({ products }: CollectionSectionProps) {
     const [activeFilter, setActiveFilter] = useState('Newest');
     const filters = ['Newest', 'Top Sell', 'Popular', 'Trending'];
 
+    const [isQuickViewOpen, setQuickViewOpen] = useState(false);
+    const [selectedProductSlug, setSelectedProductSlug] = useState<string | null>(null);
+
+    const handleOpenQuickView = (slug: string) => {
+        setSelectedProductSlug(slug);
+        setQuickViewOpen(true);
+    };
+
+    const handleCloseQuickView = () => {
+        setQuickViewOpen(false);
+        setSelectedProductSlug(null);
+    };
+
+    const containerVariants = {
+        hidden: { opacity: 0 },
+        visible: {
+            opacity: 1,
+            transition: {
+                staggerChildren: 0.1
+            }
+        }
+    };
+
+    const itemVariants = {
+        hidden: { opacity: 0, y: 20 },
+        visible: {
+            opacity: 1,
+            y: 0,
+            transition: { duration: 0.5 }
+        }
+    };
+
     return (
-        <section className={`py-20 bg-slate-50 transition-all duration-1000 ease-out ${isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+        <section className="py-20 bg-slate-50 overflow-hidden">
             <div className="container mx-auto px-6">
-                <div className="flex flex-col md:flex-row justify-between items-center mb-12 gap-6">
+                <motion.div
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6 }}
+                    className="flex flex-col md:flex-row justify-between items-center mb-12 gap-6"
+                >
                     <div className="text-center md:text-left">
                         <h2 className="text-3xl md:text-4xl font-bold text-gray-900">Koleksi Terbaru</h2>
                         <p className="mt-2 text-gray-600">Pilihan terbaik untuk kebutuhan promosi Anda.</p>
@@ -47,19 +87,30 @@ export default function CollectionSection({ isInView, products }: CollectionSect
                             </button>
                         ))}
                     </div>
-                </div>
+                </motion.div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                <motion.div
+                    variants={containerVariants}
+                    initial="hidden"
+                    whileInView="visible"
+                    viewport={{ once: true, margin: "-50px" }}
+                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"
+                >
                     {products && products.length > 0 ? (
                         products.map((product) => (
-                            <ProductCard key={product.id_produk} product={product} />
+                            <motion.div key={product.id_produk} variants={itemVariants}>
+                                <ProductCard
+                                    product={product}
+                                    onQuickView={handleOpenQuickView}
+                                />
+                            </motion.div>
                         ))
                     ) : (
                         <div className="col-span-full py-12 text-center text-gray-500 bg-white rounded-xl border border-dashed border-gray-300">
                             <p>Belum ada produk untuk kategori ini.</p>
                         </div>
                     )}
-                </div>
+                </motion.div>
 
                 <div className="mt-16 text-center">
                     <Button
@@ -71,6 +122,14 @@ export default function CollectionSection({ isInView, products }: CollectionSect
                     </Button>
                 </div>
             </div>
+
+            {selectedProductSlug && (
+                <ProductQuickView
+                    productSlug={selectedProductSlug}
+                    isOpen={isQuickViewOpen}
+                    onClose={handleCloseQuickView}
+                />
+            )}
         </section>
     );
 }

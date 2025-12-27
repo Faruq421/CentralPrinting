@@ -151,4 +151,12 @@ class Product extends Model
             'design_template_id'
         );
     }
+
+    /**
+     * Relasi ke Review (Ulasan Produk)
+     */
+    public function reviews()
+    {
+        return $this->hasMany(\App\Features\Review\Review::class, 'product_id', 'id_produk');
+    }
 }
