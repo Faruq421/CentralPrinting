@@ -69,6 +69,7 @@ class ProductController extends Controller
     {
         // 1. Validasi input dari URL (query string)
         $request->validate([
+            'search' => 'string|nullable|max:255',
             'sort' => 'in:newest,price-low,price-high',
             'category' => 'string|nullable|exists:categories,name',
             'min_price' => 'numeric|min:0',
@@ -78,7 +79,15 @@ class ProductController extends Controller
         // 2. Mulai Query Builder
         $productsQuery = Product::query()->with('category');
 
-        // 3. Terapkan Filter
+        // 3. Terapkan Filter Pencarian
+        $productsQuery->when($request->search, function (Builder $query, $searchTerm) {
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('nama_produk', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('deskripsi', 'like', '%' . $searchTerm . '%');
+            });
+        });
+
+        // 4. Terapkan Filter Kategori
         $productsQuery->when($request->category, function (Builder $query, $categoryName) {
             $query->whereHas('category', function (Builder $subQuery) use ($categoryName) {
                 $subQuery->where('name', $categoryName);
@@ -96,7 +105,7 @@ class ProductController extends Controller
             }
         });
 
-        // 4. Terapkan Sorting
+        // 5. Terapkan Sorting
         if ($request->sort === 'price-low') {
             $productsQuery->orderBy('harga', 'asc');
         } elseif ($request->sort === 'price-high') {
@@ -105,17 +114,18 @@ class ProductController extends Controller
             $productsQuery->orderBy('created_at', 'desc'); // Default: 'newest'
         }
 
-        // 5. Paginasi (Setelah semua filter & sort)
+        // 6. Paginasi (Setelah semua filter & sort)
         // 'withQueryString' sangat penting agar filter tetap ada saat pindah halaman
         $products = $productsQuery->paginate(20)->withQueryString();
 
-        // 6. Render Halaman Inertia
+        // 7. Render Halaman Inertia
         return Inertia::render('Features/Product/ShopPage', [
             'products' => $products, // Ini adalah data paginasi dari Laravel
-            'filters' => $request->only(['sort', 'category', 'min_price', 'max_price']),
+            'filters' => $request->only(['search', 'sort', 'category', 'min_price', 'max_price']),
             'categories' => Category::select('name')->distinct()->get()->pluck('name'),
         ]);
     }
+
 
     public function create()
     {

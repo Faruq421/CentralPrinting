@@ -19,7 +19,7 @@ export default function SiteLayout({ children, headerPadding = true }: { childre
             <SiteHeader auth={auth} />
 
             {/* 'children' adalah konten halaman spesifik (Welcome, MyOrders, etc.) */}
-            <main className={`flex-1 ${headerPadding ? 'pt-[120px]' : ''}`}>
+            <main className="flex-1">
                 {children}
             </main>
 

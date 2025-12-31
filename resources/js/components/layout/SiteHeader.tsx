@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, usePage } from '@inertiajs/react';
+import { Link, usePage, router } from '@inertiajs/react';
 import { type PageProps } from '@/types';
 import { route } from 'ziggy-js';
 import { Search, User, Menu, ChevronDown, LogOut, UserCircle, Package, Printer, Gift, Briefcase, Phone, Mail, X, ArrowRight, ShoppingCart, Heart, Bell, MapPin, MessageCircle, Instagram, Facebook } from 'lucide-react';
@@ -44,12 +44,22 @@ export default function SiteHeader({ auth }: PageProps) {
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isCategoryOpen, setIsCategoryOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
         const handleScroll = () => setIsScrolled(window.scrollY > 0);
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
+
+    // Handle search submission
+    const handleSearch = (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
+        if (searchQuery.trim()) {
+            router.get(route('shop.index'), { search: searchQuery.trim() });
+        }
+    };
+
 
     return (
         <header className="w-full relative z-50">
@@ -84,18 +94,20 @@ export default function SiteHeader({ auth }: PageProps) {
                     </Link>
 
                     {/* Search Bar (Desktop) */}
-                    <div className="hidden lg:flex flex-1 max-w-2xl relative group">
+                    <form onSubmit={handleSearch} className="hidden lg:flex flex-1 max-w-2xl relative group">
                         <div className="flex w-full items-center">
                             <input
                                 type="text"
                                 placeholder="Cari layanan cetak, spanduk, atau merchandise..."
                                 className="w-full h-11 pl-4 pr-12 rounded-l-lg border border-r-0 border-gray-300 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-orange-100 focus:border-orange-500 outline-none transition-all text-sm"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
                             />
-                            <Button className="h-11 px-6 rounded-l-none rounded-r-lg bg-orange-600 hover:bg-orange-700 text-white shadow-sm font-bold">
+                            <Button type="submit" className="h-11 px-6 rounded-l-none rounded-r-lg bg-orange-600 hover:bg-orange-700 text-white shadow-sm font-bold">
                                 <Search className="h-5 w-5" />
                             </Button>
                         </div>
-                    </div>
+                    </form>
 
                     {/* Right Actions */}
                     <div className="flex items-center gap-2 lg:gap-6 flex-shrink-0">

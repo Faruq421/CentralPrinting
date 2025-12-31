@@ -48,7 +48,7 @@ export default function Welcome() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.5 }}
-                className="bg-gray-50 min-h-screen font-sans pb-8 pt-4 lg:pt-6"
+                className="bg-gray-50 min-h-screen font-sans pb-8"
             >
 
                 {/* 1. HERO SECTION */}
