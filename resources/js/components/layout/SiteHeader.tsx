@@ -33,14 +33,11 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
-const productCategories = [
-    { title: 'Promosi & Marketing', icon: <Printer className="h-5 w-5" />, items: ['Digital Printing', 'Display Promotion', 'Large Format', 'Sticker', 'NameCard & Invitation'] },
-    { title: 'Produk & Merchandise', icon: <Gift className="h-5 w-5" />, items: ['Garment & Textile', 'Merchandise', 'Packaging', 'Home Decor & Photo'] },
-    { title: 'Kebutuhan Kantor', icon: <Briefcase className="h-5 w-5" />, items: ['Stationary', 'Kop Surat', 'Amplop', 'ID Card'] }
-];
+
 
 export default function SiteHeader({ auth }: PageProps) {
     const { user } = auth;
+    const { categories } = usePage<PageProps & { categories: string[] }>().props;
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isCategoryOpen, setIsCategoryOpen] = useState(false);
@@ -190,33 +187,26 @@ export default function SiteHeader({ auth }: PageProps) {
                             </button>
 
                             {/* Mega Menu Content (Hover) */}
-                            <div className="absolute top-full left-0 w-[800px] bg-white shadow-xl rounded-b-xl border border-gray-100 opacity-0 invisible group-hover/cat:opacity-100 group-hover/cat:visible transition-all duration-200 translate-y-2 group-hover/cat:translate-y-0">
-                                <div className="grid grid-cols-3 gap-6 p-6">
-                                    {productCategories.map((category) => (
-                                        <div key={category.title} className="space-y-4">
-                                            <div className="flex items-center gap-2 pb-2 border-b border-gray-100 text-gray-900 font-bold">
-                                                <div className="text-orange-500">{category.icon}</div>
-                                                {category.title}
-                                            </div>
-                                            <ul className="space-y-2">
-                                                {category.items.map((item) => (
-                                                    <li key={item}>
-                                                        <Link
-                                                            href={route('shop.index', { category: category.title })}
-                                                            className="text-sm text-gray-500 hover:text-orange-600 hover:translate-x-1 transition-all flex items-center"
-                                                        >
-                                                            <ArrowRight className="h-3 w-3 mr-2 opacity-0 -ml-5 group-hover:opacity-100 group-hover:ml-0 transition-all" />
-                                                            {item}
-                                                        </Link>
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        </div>
-                                    ))}
+                            <div className="absolute top-full left-0 w-[600px] bg-white shadow-xl rounded-b-xl border border-gray-100 opacity-0 invisible group-hover/cat:opacity-100 group-hover/cat:visible transition-all duration-200 translate-y-2 group-hover/cat:translate-y-0">
+                                <div className="grid grid-cols-3 gap-4 p-6">
+                                    {categories && categories.map((category) => {
+                                        const categoryName = typeof category === 'string' ? category : category.name;
+                                        return (
+                                            <Link
+                                                key={categoryName}
+                                                href={route('shop.index', { category: categoryName })}
+                                                className="flex items-center gap-2 p-3 text-sm text-gray-700 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-all group"
+                                            >
+                                                <Printer className="h-4 w-4 text-orange-500" />
+                                                <span className="font-medium">{categoryName}</span>
+                                                <ArrowRight className="h-3 w-3 ml-auto opacity-0 -mr-2 group-hover:opacity-100 group-hover:mr-0 transition-all" />
+                                            </Link>
+                                        );
+                                    })}
                                 </div>
                                 <div className="p-4 bg-gray-50 rounded-b-xl border-t border-gray-100 text-center">
                                     <Link href={route('shop.index')} className="text-sm font-semibold text-orange-600 hover:underline">
-                                        Lihat Semua Kategori &rarr;
+                                        Lihat Semua Produk &rarr;
                                     </Link>
                                 </div>
                             </div>
@@ -331,29 +321,22 @@ export default function SiteHeader({ auth }: PageProps) {
                                     Beranda
                                 </Link>
                                 <div className="px-4 py-3">
-                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Produk</p>
-                                    <div className="space-y-4 pl-2 border-l-2 border-gray-100">
-                                        {productCategories.map((category) => (
-                                            <div key={category.title}>
-                                                <div className="flex items-center gap-2 mb-2 text-orange-600 font-semibold text-sm">
-                                                    {category.icon}
-                                                    {category.title}
-                                                </div>
-                                                <ul className="pl-6 space-y-2">
-                                                    {category.items.map((item) => (
-                                                        <li key={item}>
-                                                            <Link
-                                                                href={route('shop.index', { category: category.title })}
-                                                                onClick={() => setIsMobileMenuOpen(false)}
-                                                                className="text-sm text-gray-600 hover:text-orange-600 block py-1"
-                                                            >
-                                                                {item}
-                                                            </Link>
-                                                        </li>
-                                                    ))}
-                                                </ul>
-                                            </div>
-                                        ))}
+                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Kategori Produk</p>
+                                    <div className="space-y-2 pl-2 border-l-2 border-gray-100">
+                                        {categories && categories.map((category) => {
+                                            const categoryName = typeof category === 'string' ? category : category.name;
+                                            return (
+                                                <Link
+                                                    key={categoryName}
+                                                    href={route('shop.index', { category: categoryName })}
+                                                    onClick={() => setIsMobileMenuOpen(false)}
+                                                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
+                                                >
+                                                    <Printer className="h-4 w-4 text-orange-500" />
+                                                    {categoryName}
+                                                </Link>
+                                            );
+                                        })}
                                     </div>
                                 </div>
                                 <Link

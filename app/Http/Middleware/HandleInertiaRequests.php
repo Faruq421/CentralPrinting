@@ -53,6 +53,7 @@ class HandleInertiaRequests extends Middleware
                     'quantity' => $quantity,
                 ];
             },
+            'categories' => fn() => \App\Features\Product\Category::select('name')->distinct()->orderBy('name')->pluck('name')->values()->toArray(),
         ]);
     }
 }
