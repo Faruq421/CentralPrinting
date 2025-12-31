@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { route } from 'ziggy-js';
 import { motion, AnimatePresence } from 'framer-motion';
 import SiteLayout from '@/layouts/SiteLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
     Card,
@@ -44,6 +43,7 @@ import { formatRupiah } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ProductCard } from '@/components/ProductCard';
+import { ProductQuickView } from '@/components/ProductQuickView';
 
 // --- INTERFACES ---
 interface Product {
@@ -98,28 +98,32 @@ export default function ShopPage() {
     // Get props from Inertia
     const { products: paginatedProducts, filters, categories } = usePage<ShopPageProps>().props;
 
+    // Store all products from initial load
+    const [allProducts] = useState<Product[]>(paginatedProducts.data);
+
     // Local state for filters
     const [localFilters, setLocalFilters] = useState({
         search: filters.search || '',
         category: filters.category || '',
-        priceRange: [filters.min_price || 0, filters.max_price || 2000000],
+        minPrice: filters.min_price ? String(filters.min_price) : '',
+        maxPrice: filters.max_price ? String(filters.max_price) : '',
         sort: filters.sort || 'newest',
     });
 
-    const [isLoading, setIsLoading] = useState(false);
     const [selectedCategories, setSelectedCategories] = useState<string[]>(
         filters.category ? [filters.category] : []
     );
 
-    // Listen for Inertia events to set loading state
-    useEffect(() => {
-        const removeStart = router.on('start', () => setIsLoading(true));
-        const removeFinish = router.on('finish', () => setIsLoading(false));
-        return () => {
-            removeStart();
-            removeFinish();
-        };
-    }, []);
+    // Quick View State
+    const [quickViewSlug, setQuickViewSlug] = useState<string | null>(null);
+    const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
+
+    const handleQuickView = (slug: string) => {
+        setQuickViewSlug(slug);
+        setIsQuickViewOpen(true);
+    };
+
+
 
     // Toggle category selection
     const toggleCategory = (category: string) => {
@@ -130,27 +134,54 @@ export default function ShopPage() {
         );
     };
 
-    // Apply filters function
-    const applyFilters = () => {
-        router.get(route('shop.index'), {
-            search: localFilters.search || undefined,
-            category: selectedCategories.length === 1 ? selectedCategories[0] : undefined,
-            min_price: localFilters.priceRange[0] > 0 ? localFilters.priceRange[0] : undefined,
-            max_price: localFilters.priceRange[1] < 2000000 ? localFilters.priceRange[1] : undefined,
-            sort: localFilters.sort !== 'newest' ? localFilters.sort : undefined,
-        }, {
-            preserveState: true,
-            preserveScroll: true,
-        });
-    };
+    // Client-side filtering with useMemo
+    const filteredProducts = useMemo(() => {
+        let filtered = [...allProducts];
 
-    // Handle sort change - apply immediately
+        // Search filter
+        if (localFilters.search) {
+            const searchLower = localFilters.search.toLowerCase();
+            filtered = filtered.filter(product =>
+                product.nama_produk.toLowerCase().includes(searchLower) ||
+                product.category.name.toLowerCase().includes(searchLower) ||
+                (product.deskripsi && product.deskripsi.toLowerCase().includes(searchLower))
+            );
+        }
+
+        // Category filter
+        if (selectedCategories.length > 0) {
+            filtered = filtered.filter(product =>
+                selectedCategories.includes(product.category.name)
+            );
+        }
+
+        // Price filter
+        const minPrice = localFilters.minPrice ? Number(localFilters.minPrice) : 0;
+        const maxPrice = localFilters.maxPrice ? Number(localFilters.maxPrice) : Infinity;
+        filtered = filtered.filter(product =>
+            product.harga >= minPrice && product.harga <= maxPrice
+        );
+
+        // Sort
+        switch (localFilters.sort) {
+            case 'price-low':
+                filtered.sort((a, b) => a.harga - b.harga);
+                break;
+            case 'price-high':
+                filtered.sort((a, b) => b.harga - a.harga);
+                break;
+            case 'newest':
+            default:
+                // Keep original order (newest first from backend)
+                break;
+        }
+
+        return filtered;
+    }, [allProducts, localFilters.search, localFilters.minPrice, localFilters.maxPrice, localFilters.sort, selectedCategories]);
+
+    // Handle sort change
     const handleSortChange = (value: string) => {
         setLocalFilters(prev => ({ ...prev, sort: value }));
-        router.get(route('shop.index'), {
-            ...filters,
-            sort: value,
-        }, { preserveState: true, preserveScroll: true });
     };
 
     // Reset filters
@@ -158,11 +189,11 @@ export default function ShopPage() {
         setLocalFilters({
             search: '',
             category: '',
-            priceRange: [0, 2000000],
+            minPrice: '',
+            maxPrice: '',
             sort: 'newest',
         });
         setSelectedCategories([]);
-        router.get(route('shop.index'), {}, { preserveState: true });
     };
 
     // Animation variants
@@ -179,7 +210,7 @@ export default function ShopPage() {
         visible: { opacity: 1, scale: 1, transition: { duration: 0.3 } }
     };
 
-    const displayedProducts = paginatedProducts.data;
+    const displayedProducts = filteredProducts;
 
     return (
         <SiteLayout>
@@ -191,15 +222,12 @@ export default function ShopPage() {
                     <div>
                         <p className="text-sm text-gray-500 mb-1">Produk & Jasa</p>
                         <div className="flex items-center gap-2">
-                            <span className="font-semibold text-gray-900">{paginatedProducts.total} Produk Ditemukan</span>
-                            {filters.search && (
+                            <span className="font-semibold text-gray-900">{displayedProducts.length} Produk Ditemukan</span>
+                            {localFilters.search && (
                                 <Badge variant="secondary" className="ml-2">
-                                    Pencarian: "{filters.search}"
+                                    Pencarian: "{localFilters.search}"
                                     <button
-                                        onClick={() => {
-                                            setLocalFilters(prev => ({ ...prev, search: '' }));
-                                            router.get(route('shop.index'), { ...filters, search: undefined }, { preserveState: true });
-                                        }}
+                                        onClick={() => setLocalFilters(prev => ({ ...prev, search: '' }))}
                                         className="ml-1 hover:text-red-500"
                                     >
                                         <X className="h-3 w-3" />
@@ -242,20 +270,32 @@ export default function ShopPage() {
                                     <Separator />
                                     <div className="space-y-4">
                                         <h3 className="font-medium text-sm text-gray-900">Harga</h3>
-                                        <Slider
-                                            defaultValue={[0, 2000000]}
-                                            max={2000000}
-                                            step={10000}
-                                            value={localFilters.priceRange}
-                                            onValueChange={(val) => setLocalFilters(prev => ({ ...prev, priceRange: val }))}
-                                        />
-                                        <div className="flex justify-between text-xs text-gray-500">
-                                            <span>{formatRupiah(localFilters.priceRange[0])}</span>
-                                            <span>{formatRupiah(localFilters.priceRange[1])}</span>
+                                        <div className="flex items-center gap-2">
+                                            <div className="space-y-1 w-full">
+                                                <label className="text-xs text-gray-500">Min</label>
+                                                <Input
+                                                    type="number"
+                                                    placeholder="0"
+                                                    value={localFilters.minPrice}
+                                                    onChange={(e) => setLocalFilters(prev => ({ ...prev, minPrice: e.target.value }))}
+                                                    className="h-9 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                />
+                                            </div>
+                                            <span className="text-gray-400 pt-5">-</span>
+                                            <div className="space-y-1 w-full">
+                                                <label className="text-xs text-gray-500">Max</label>
+                                                <Input
+                                                    type="number"
+                                                    placeholder="Max"
+                                                    value={localFilters.maxPrice}
+                                                    onChange={(e) => setLocalFilters(prev => ({ ...prev, maxPrice: e.target.value }))}
+                                                    className="h-9 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                />
+                                            </div>
                                         </div>
                                     </div>
-                                    <Button onClick={applyFilters} className="w-full">Terapkan Filter</Button>
                                 </div>
+
                             </SheetContent>
                         </Sheet>
 
@@ -307,89 +347,93 @@ export default function ShopPage() {
                                 <Separator />
 
                                 {/* Price */}
+                                {/* Price */}
                                 <div className="space-y-4">
                                     <h3 className="font-medium text-sm text-gray-900">Rentang Harga</h3>
-                                    <Slider
-                                        defaultValue={[0, 2000000]}
-                                        max={2000000}
-                                        step={10000}
-                                        value={localFilters.priceRange}
-                                        onValueChange={(val) => setLocalFilters(prev => ({ ...prev, priceRange: val }))}
-                                        className="py-4"
-                                    />
-                                    <div className="flex items-center justify-between gap-2">
-                                        <div className="bg-gray-50 rounded px-2 py-1 text-xs text-gray-600 w-24 text-center">
-                                            {formatRupiah(localFilters.priceRange[0])}
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <div className="space-y-1">
+                                            <label className="text-xs text-gray-500">Minimum</label>
+                                            <div className="relative">
+                                                <span className="absolute left-2.5 top-2.5 text-xs text-gray-400">Rp</span>
+                                                <Input
+                                                    type="number"
+                                                    min={0}
+                                                    placeholder="0"
+                                                    value={localFilters.minPrice}
+                                                    onChange={(e) => setLocalFilters(prev => ({ ...prev, minPrice: e.target.value }))}
+                                                    className="pl-8 text-xs [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                />
+                                            </div>
                                         </div>
-                                        <span className="text-gray-400">-</span>
-                                        <div className="bg-gray-50 rounded px-2 py-1 text-xs text-gray-600 w-24 text-center">
-                                            {formatRupiah(localFilters.priceRange[1])}
+                                        <div className="space-y-1">
+                                            <label className="text-xs text-gray-500">Maksimum</label>
+                                            <div className="relative">
+                                                <span className="absolute left-2.5 top-2.5 text-xs text-gray-400">Rp</span>
+                                                <Input
+                                                    type="number"
+                                                    min={0}
+                                                    placeholder="Max"
+                                                    value={localFilters.maxPrice}
+                                                    onChange={(e) => setLocalFilters(prev => ({ ...prev, maxPrice: e.target.value }))}
+                                                    className="pl-8 text-xs [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                />
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* Apply & Reset Buttons */}
-                                <div className="space-y-2">
-                                    <Button onClick={applyFilters} className="w-full bg-orange-600 hover:bg-orange-700">
-                                        Terapkan Filter
-                                    </Button>
-                                    <Button
-                                        variant="outline"
-                                        className="w-full text-xs h-8"
-                                        onClick={resetFilters}
-                                    >
-                                        Reset Filter
-                                    </Button>
-                                </div>
+
                             </CardContent>
                         </Card>
                     </aside>
 
                     {/* --- PRODUCT GRID --- */}
                     <main className="flex-1">
-                        {isLoading ? (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                                {[...Array(6)].map((_, i) => <ProductCardSkeleton key={i} />)}
-                            </div>
-                        ) : (
-                            <motion.div
-                                variants={containerVariants}
-                                initial="hidden"
-                                animate="visible"
-                                className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6"
-                            >
-                                <AnimatePresence mode="popLayout">
-                                    {displayedProducts.map((product) => (
-                                        <motion.div key={product.id_produk} variants={itemVariants} layout className="h-full">
-                                            <ProductCard product={product} />
-                                        </motion.div>
-                                    ))}
-                                </AnimatePresence>
-
-                                {/* Empty State */}
-                                {displayedProducts.length === 0 && (
+                        <motion.div
+                            variants={containerVariants}
+                            initial="hidden"
+                            animate="visible"
+                            className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6"
+                        >
+                            <AnimatePresence mode="popLayout">
+                                {displayedProducts.map((product) => (
                                     <motion.div
-                                        initial={{ opacity: 0 }}
-                                        animate={{ opacity: 1 }}
-                                        className="col-span-full flex flex-col items-center justify-center py-16 text-center"
+                                        key={product.id_produk}
+                                        variants={itemVariants}
+                                        layout
+                                        initial="hidden"
+                                        animate="visible"
+                                        exit="hidden"
+                                        className="h-full"
                                     >
-                                        <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
-                                            <Search className="h-6 w-6 text-gray-300" />
-                                        </div>
-                                        <h3 className="text-lg font-medium text-gray-900">Tidak ada produk ditemukan</h3>
-                                        <p className="text-gray-500 text-sm mt-1 mb-4">
-                                            {filters.search
-                                                ? `Tidak ada hasil untuk "${filters.search}". Coba kata kunci lain.`
-                                                : 'Coba sesuaikan filter kategori atau harga Anda.'
-                                            }
-                                        </p>
-                                        <Button variant="outline" onClick={resetFilters}>
-                                            Reset Filter
-                                        </Button>
+                                        <ProductCard product={product} onQuickView={handleQuickView} />
                                     </motion.div>
-                                )}
-                            </motion.div>
-                        )}
+                                ))}
+                            </AnimatePresence>
+
+                            {/* Empty State */}
+                            {displayedProducts.length === 0 && (
+                                <motion.div
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    className="col-span-full flex flex-col items-center justify-center py-16 text-center"
+                                >
+                                    <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                                        <Search className="h-6 w-6 text-gray-300" />
+                                    </div>
+                                    <h3 className="text-lg font-medium text-gray-900">Tidak ada produk ditemukan</h3>
+                                    <p className="text-gray-500 text-sm mt-1 mb-4">
+                                        {localFilters.search
+                                            ? `Tidak ada hasil untuk "${localFilters.search}". Coba kata kunci lain.`
+                                            : 'Coba sesuaikan filter kategori atau harga Anda.'
+                                        }
+                                    </p>
+                                    <Button variant="outline" onClick={resetFilters}>
+                                        Reset Filter
+                                    </Button>
+                                </motion.div>
+                            )}
+                        </motion.div>
 
                         {/* Pagination */}
                         {paginatedProducts.last_page > 1 && (
@@ -453,9 +497,14 @@ export default function ShopPage() {
                                 </Pagination>
                             </div>
                         )}
+                        <ProductQuickView
+                            isOpen={isQuickViewOpen}
+                            onClose={() => setIsQuickViewOpen(false)}
+                            productSlug={quickViewSlug}
+                        />
                     </main>
                 </div>
-            </div>
-        </SiteLayout>
+            </div >
+        </SiteLayout >
     );
 }

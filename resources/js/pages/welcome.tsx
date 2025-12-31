@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Head, Link, usePage } from '@inertiajs/react';
 import SiteLayout from '@/layouts/SiteLayout';
 import { ProductCard } from '@/components/ProductCard';
+import { ProductQuickView } from '@/components/ProductQuickView';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import { route } from 'ziggy-js';
@@ -38,6 +39,15 @@ export default function Welcome() {
         featuredProducts: Product[],
         categories: Category[]
     }>().props;
+
+    // Quick View State
+    const [quickViewSlug, setQuickViewSlug] = useState<string | null>(null);
+    const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
+
+    const handleQuickView = (slug: string) => {
+        setQuickViewSlug(slug);
+        setIsQuickViewOpen(true);
+    };
 
     return (
         <SiteLayout headerPadding={false}>
@@ -87,7 +97,7 @@ export default function Welcome() {
                             </div>
                             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
                                 {category.products.map((product) => (
-                                    <ProductCard key={product.id_produk} product={product} />
+                                    <ProductCard key={product.id_produk} product={product} onQuickView={handleQuickView} />
                                 ))}
                             </div>
                         </motion.section>
@@ -95,6 +105,12 @@ export default function Welcome() {
                 ))}
 
             </motion.div>
+
+            <ProductQuickView
+                isOpen={isQuickViewOpen}
+                onClose={() => setIsQuickViewOpen(false)}
+                productSlug={quickViewSlug}
+            />
         </SiteLayout>
     );
 }

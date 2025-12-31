@@ -24,8 +24,24 @@ import SiteLayout from '@/layouts/SiteLayout';
 import { ProductCard } from '@/components/ProductCard'; // Import ProductCard
 
 // --- Tipe Data ---
+interface DesignTemplate {
+    id: number;
+    name: string;
+    thumbnail_path: string;
+}
+
+interface AttributeValue {
+    id: number;
+    attribute_id: number;
+    value: string;
+    attribute: { id: number; name: string };
+    pivot: { price: number };
+}
+
 interface ProductData extends BaseProduct {
     id_produk: number;
+    nama_produk: string;
+    slug: string;
     deskripsi: string;
     attribute_values: AttributeValue[];
     allow_custom_design: boolean;
@@ -34,6 +50,12 @@ interface ProductData extends BaseProduct {
     harga: number;
     stok: number;
     reviews: ReviewData[];
+    category: { name: string };
+    user: {
+        id: number;
+        name: string;
+        avatar?: string;
+    };
 }
 interface ReviewData {
     id: number;
