@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from "@/components/ui/carousel";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ShoppingCart, Plus, Minus, Star, StarHalf, UploadCloud, X, CheckCircle2, Heart, Share2, ChevronDown, ChevronUp, NotebookPen } from 'lucide-react';
 
 import SiteLayout from '@/layouts/SiteLayout';
@@ -273,14 +274,14 @@ export default function ProductShowPage({ product, related_products }: PageProps
                             variants={containerVariants}
                             initial="hidden"
                             animate="visible"
-                            className="grid grid-cols-1 items-start gap-12 lg:grid-cols-2 lg:gap-16"
+                            className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:gap-16"
                         >
                             <motion.div variants={itemVariants}>
                                 <ProductGallery product={product} />
                             </motion.div>
 
                             <motion.div variants={itemVariants}>
-                                <motion.div variants={itemVariants} className="sticky top-24 h-fit space-y-8">
+                                <motion.div variants={itemVariants} className="h-fit space-y-8">
                                     {/* Header Produk */}
                                     <div className="space-y-4">
                                         <div className="space-y-2">
@@ -313,47 +314,64 @@ export default function ProductShowPage({ product, related_products }: PageProps
 
                                     <Separator />
 
-                                    {/* Pilihan Atribut */}
+                                    {/* Pilihan Atribut (Accordion) */}
                                     <div className="space-y-6">
-                                        {(Object.entries(attributeGroups) as [string, AttributeValue[]][]).map(([name, values]) => (
-                                            <div key={name} className="space-y-3">
-                                                <div className="flex items-center justify-between">
-                                                    <Label className='text-base font-semibold text-gray-900 dark:text-gray-100'>
-                                                        {name}
-                                                        {selectedOptions[values[0].attribute.id] && (
-                                                            <span className="ml-2 bg-orange-100 text-orange-700 px-2 py-0.5 rounded text-xs font-normal">
-                                                                {values.find(v => v.id === selectedOptions[values[0].attribute.id])?.value}
-                                                            </span>
-                                                        )}
-                                                    </Label>
-                                                </div>
-                                                <RadioGroup onValueChange={(valueId) => handleOptionChange(values[0].attribute.id.toString(), Number(valueId))} className='flex flex-wrap gap-3'>
-                                                    {values.map((value) => {
-                                                        const isSelected = selectedOptions[values[0].attribute.id] === value.id;
-                                                        return (
-                                                            <Label
-                                                                key={value.id}
-                                                                htmlFor={`attr_${value.id}`}
-                                                                className={cn(
-                                                                    "group relative flex cursor-pointer items-center justify-center rounded-full border px-6 py-2.5 text-sm font-medium uppercase transition-all",
-                                                                    isSelected
-                                                                        ? "border-orange-500 bg-orange-600 text-white shadow-md shadow-orange-500/20"
-                                                                        : "border-gray-200 bg-white text-gray-700 hover:border-orange-200 hover:bg-orange-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 dark:hover:border-gray-600"
-                                                                )}
-                                                            >
-                                                                <RadioGroupItem value={value.id.toString()} id={`attr_${value.id}`} className="sr-only" />
-                                                                {value.value}
-                                                                {value.pivot.price > 0 && (
-                                                                    <span className={cn("ml-2 text-xs font-normal", isSelected ? "text-orange-100" : "text-gray-500 group-hover:text-orange-600")}>
-                                                                        (+{value.pivot.price.toLocaleString('id-ID')})
+                                        <Accordion type="multiple" defaultValue={Object.keys(attributeGroups)} className="w-full space-y-3">
+                                            {(Object.entries(attributeGroups) as [string, AttributeValue[]][]).map(([name, values]) => {
+                                                const attributeId = values[0].attribute.id;
+                                                const selectedValueId = selectedOptions[attributeId];
+                                                const selectedValue = values.find(v => v.id === selectedValueId)?.value;
+
+                                                return (
+                                                    <AccordionItem
+                                                        key={name}
+                                                        value={name}
+                                                        className="rounded-xl border border-gray-100 bg-white px-4 shadow-sm transition-all hover:border-orange-200 hover:shadow-md dark:bg-gray-800 dark:border-gray-700 data-[state=open]:ring-1 data-[state=open]:ring-orange-100"
+                                                    >
+                                                        <AccordionTrigger className="hover:no-underline py-4">
+                                                            <div className="flex items-center gap-3">
+                                                                <span className="text-base font-bold text-gray-900 dark:text-gray-100">{name}</span>
+                                                                {selectedValue && (
+                                                                    <span className="rounded-md bg-orange-100 px-2.5 py-0.5 text-xs font-semibold text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
+                                                                        {selectedValue}
                                                                     </span>
                                                                 )}
-                                                            </Label>
-                                                        );
-                                                    })}
-                                                </RadioGroup>
-                                            </div>
-                                        ))}
+                                                            </div>
+                                                        </AccordionTrigger>
+                                                        <AccordionContent className="pb-4 pt-1">
+                                                            <RadioGroup
+                                                                onValueChange={(valueId) => handleOptionChange(attributeId.toString(), Number(valueId))}
+                                                                className='flex flex-wrap gap-3'
+                                                            >
+                                                                {values.map((value) => {
+                                                                    const isSelected = selectedOptions[attributeId] === value.id;
+                                                                    return (
+                                                                        <Label
+                                                                            key={value.id}
+                                                                            htmlFor={`attr_${value.id}`}
+                                                                            className={cn(
+                                                                                "group relative flex cursor-pointer items-center justify-center rounded-lg border px-5 py-2.5 text-sm font-medium transition-all duration-200 select-none",
+                                                                                isSelected
+                                                                                    ? "border-orange-500 bg-orange-50 text-orange-700 ring-1 ring-orange-500 shadow-sm"
+                                                                                    : "border-gray-200 bg-gray-50 text-gray-700 hover:border-orange-300 hover:bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300"
+                                                                            )}
+                                                                        >
+                                                                            <RadioGroupItem value={value.id.toString()} id={`attr_${value.id}`} className="sr-only" />
+                                                                            <span>{value.value}</span>
+                                                                            {value.pivot.price > 0 && (
+                                                                                <span className={cn("ml-2 text-xs", isSelected ? "text-orange-600 font-semibold" : "text-gray-500 font-normal")}>
+                                                                                    (+{value.pivot.price.toLocaleString('id-ID')})
+                                                                                </span>
+                                                                            )}
+                                                                        </Label>
+                                                                    );
+                                                                })}
+                                                            </RadioGroup>
+                                                        </AccordionContent>
+                                                    </AccordionItem>
+                                                );
+                                            })}
+                                        </Accordion>
                                     </div>
 
                                     {/* Opsi Desain */}
