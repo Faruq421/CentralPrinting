@@ -9,7 +9,7 @@ import SiteFooter from '@/components/layout/SiteFooter';
 // Impor Toaster/Sonner untuk notifikasi global
 import { Toaster } from '@/components/ui/sonner';
 
-export default function SiteLayout({ children }: { children: React.ReactNode }) {
+export default function SiteLayout({ children, headerPadding = true }: { children: React.ReactNode, headerPadding?: boolean }) {
     // Ambil 'auth' dari props global untuk diteruskan ke Header
     const { auth } = usePage<PageProps>().props;
 
@@ -19,7 +19,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
             <SiteHeader auth={auth} />
 
             {/* 'children' adalah konten halaman spesifik (Welcome, MyOrders, etc.) */}
-            <main className="flex-1 pt-[120px]">
+            <main className={`flex-1 ${headerPadding ? 'pt-[120px]' : ''}`}>
                 {children}
             </main>
 

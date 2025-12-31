@@ -14,28 +14,31 @@ class WelcomeController extends Controller
      */
     public function index()
     {
-        // Mengambil 8 produk terbaru yang statusnya aktif untuk CollectionSection
-        // Eager load relasi 'category' untuk menghindari N+1 problem
-        $products = Product::with('category')
-            ->where('status', true)
-            ->latest() // Mengurutkan dari yang terbaru
-            ->take(8)  // Membatasi hanya 8 produk
-            ->get();
-
         // Mengambil 4 produk unggulan (fitur) untuk HeroSection
-        // Bisa berdasarkan kriteria lain seperti order count, tapi untuk saat ini kita ambil secara acak atau terbaru
         $featuredProducts = Product::with('category')
             ->where('status', true)
-            ->inRandomOrder() // Ambil secara acak untuk variasi
+            ->inRandomOrder()
             ->take(4)
             ->get();
 
-        // Mengambil semua kategori untuk CategoriesSection
-        $categories = Category::all();
+        // Mengambil semua kategori BESERTA 4 produk terbaru dari masing-masing kategori
+        // FIX: Eager load 'category' on the products as well, so ProductCard has access to product.category.name
+        $categories = Category::with(['products' => function ($query) {
+            $query->with('category') // <--- Added this to fix "undefined reading 'name'"
+                  ->where('status', true)
+                  ->latest()
+                  ->take(4);
+        }])->get();
 
-        // Render komponen Inertia 'welcome' dan kirim data produk sebagai props
+        // Produk rekomendasi acak untuk feed bawah
+        $recommendations = Product::with('category')
+             ->where('status', true)
+             ->inRandomOrder()
+             ->take(10)
+             ->get();
+
         return Inertia::render('welcome', [
-            'products' => $products,
+            'products' => $recommendations,
             'featuredProducts' => $featuredProducts,
             'categories' => $categories,
         ]);

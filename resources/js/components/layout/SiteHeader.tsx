@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, usePage } from '@inertiajs/react';
 import { type PageProps } from '@/types';
 import { route } from 'ziggy-js';
-import { Search, User, Menu, ChevronDown, LogOut, UserCircle, Package, Printer, Gift, Briefcase, Phone, Mail, X, ArrowRight, ShoppingCart, Heart, Bell } from 'lucide-react';
+import { Search, User, Menu, ChevronDown, LogOut, UserCircle, Package, Printer, Gift, Briefcase, Phone, Mail, X, ArrowRight, ShoppingCart, Heart, Bell, MapPin, MessageCircle, Instagram, Facebook } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -171,9 +171,9 @@ export default function SiteHeader({ auth }: PageProps) {
                     <div className="flex items-center gap-8">
                         {/* Categories Dropdown */}
                         <div className="relative group/cat z-30">
-                            <button className="flex items-center gap-3 bg-gray-100 px-6 py-3.5 text-sm font-bold text-gray-800 hover:bg-gray-200 transition-colors cursor-pointer border-l border-r border-gray-100 min-w-[240px]">
-                                <Menu className="h-5 w-5" />
-                                Kategori Belanja
+                            <button className="flex items-center gap-3 bg-gray-100 px-6 py-3.5 text-sm font-bold text-gray-800 hover:bg-gray-200 transition-colors cursor-pointer border-l border-r border-gray-100 min-w-[150px]">
+                                <Menu className="h-5 w-" />
+                                Kategori
                                 <ChevronDown className="h-4 w-4 ml-auto text-gray-500" />
                             </button>
 
@@ -219,13 +219,47 @@ export default function SiteHeader({ auth }: PageProps) {
                             <Link href={route('shop.index')} className={cn("text-sm font-semibold hover:text-orange-600 transition-colors relative py-3 group", route().current('shop.*') ? "text-orange-600" : "text-gray-600")}>
                                 Semua Produk
                             </Link>
-                            <Link href={route('portfolio.index')} className={cn("text-sm font-semibold hover:text-orange-600 transition-colors relative py-3 group", route().current('portfolio.index') ? "text-orange-600" : "text-gray-600")}>
-                                Portofolio
-                                <span className={cn("absolute bottom-0 left-0 w-full h-0.5 bg-orange-500 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left", route().current('portfolio.index') && "scale-x-100")}></span>
+                            <Link href={route('locations.index')} className={cn("text-sm font-semibold hover:text-orange-600 transition-colors relative py-3 group", route().current('locations.index') ? "text-orange-600" : "text-gray-600")}>
+                                Lokasi Toko
+                                <span className={cn("absolute bottom-0 left-0 w-full h-0.5 bg-orange-500 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left", route().current('locations.index') && "scale-x-100")}></span>
                             </Link>
-                            <Link href="#" className="text-sm font-semibold text-gray-600 hover:text-orange-600 transition-colors py-3">
-                                Panduan Cetak
-                            </Link>
+
+                            {/* Contact Us Dropdown */}
+                            <DropdownMenu>
+                                <DropdownMenuTrigger className="text-sm font-semibold text-gray-600 hover:text-orange-600 transition-colors py-3 flex items-center gap-1">
+                                    Contact Us
+                                    <ChevronDown className="h-3 w-3" />
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-56 mt-2">
+                                    <DropdownMenuLabel>Hubungi Kami</DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem asChild>
+                                        <a href="https://wa.me/628123456789" target="_blank" rel="noopener noreferrer" className="cursor-pointer flex items-center">
+                                            <MessageCircle className="mr-2 h-4 w-4 text-green-600" />
+                                            WhatsApp
+                                        </a>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem asChild>
+                                        <a href="https://instagram.com/centralprinting.id" target="_blank" rel="noopener noreferrer" className="cursor-pointer flex items-center">
+                                            <Instagram className="mr-2 h-4 w-4 text-pink-600" />
+                                            Instagram
+                                        </a>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem asChild>
+                                        <a href="https://facebook.com/centralprinting" target="_blank" rel="noopener noreferrer" className="cursor-pointer flex items-center">
+                                            <Facebook className="mr-2 h-4 w-4 text-blue-600" />
+                                            Facebook
+                                        </a>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem asChild>
+                                        <a href="mailto:info@centralprinting.com" className="cursor-pointer flex items-center">
+                                            <Mail className="mr-2 h-4 w-4 text-gray-600" />
+                                            Email
+                                        </a>
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         </nav>
 
                         {/* Right Side Promo Link */}
@@ -311,12 +345,58 @@ export default function SiteHeader({ auth }: PageProps) {
                                     </div>
                                 </div>
                                 <Link
-                                    href={route('portfolio.index')}
+                                    href={route('locations.index')}
                                     onClick={() => setIsMobileMenuOpen(false)}
                                     className="flex items-center px-4 py-3 text-base font-semibold text-gray-700 hover:bg-gray-50 rounded-lg"
                                 >
-                                    Portofolio
+                                    <MapPin className="h-5 w-5 mr-3 text-orange-600" />
+                                    Lokasi Toko
                                 </Link>
+
+                                {/* Contact Us Section */}
+                                <div className="px-4 py-3">
+                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Contact Us</p>
+                                    <div className="space-y-2 pl-2">
+                                        <a
+                                            href="https://wa.me/628123456789"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            onClick={() => setIsMobileMenuOpen(false)}
+                                            className="flex items-center px-4 py-2 text-sm text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                                        >
+                                            <MessageCircle className="h-4 w-4 mr-3" />
+                                            WhatsApp
+                                        </a>
+                                        <a
+                                            href="https://instagram.com/centralprinting.id"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            onClick={() => setIsMobileMenuOpen(false)}
+                                            className="flex items-center px-4 py-2 text-sm text-gray-600 hover:text-pink-600 hover:bg-pink-50 rounded-lg transition-colors"
+                                        >
+                                            <Instagram className="h-4 w-4 mr-3" />
+                                            Instagram
+                                        </a>
+                                        <a
+                                            href="https://facebook.com/centralprinting"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            onClick={() => setIsMobileMenuOpen(false)}
+                                            className="flex items-center px-4 py-2 text-sm text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                        >
+                                            <Facebook className="h-4 w-4 mr-3" />
+                                            Facebook
+                                        </a>
+                                        <a
+                                            href="mailto:info@centralprinting.com"
+                                            onClick={() => setIsMobileMenuOpen(false)}
+                                            className="flex items-center px-4 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
+                                        >
+                                            <Mail className="h-4 w-4 mr-3" />
+                                            Email
+                                        </a>
+                                    </div>
+                                </div>
                             </nav>
                         </div>
 

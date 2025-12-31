@@ -1,28 +1,19 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import { route } from 'ziggy-js';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Head, Link } from '@inertiajs/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import SiteLayout from '@/layouts/SiteLayout';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
-import { ProductCard } from '@/components/ProductCard';
-import { ProductQuickView } from '@/components/ProductQuickView';
+import { Input } from '@/components/ui/input';
+import { Slider } from '@/components/ui/slider';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
-    Drawer,
-    DrawerContent,
-    DrawerHeader,
-    DrawerTitle,
-    DrawerTrigger,
-} from '@/components/ui/drawer';
-import {
-    Pagination,
-    PaginationContent,
-    PaginationItem,
-    PaginationLink,
-    PaginationPrevious,
-    PaginationNext,
-    PaginationEllipsis,
-} from '@/components/ui/pagination';
+    Card,
+    CardContent,
+    CardFooter,
+    CardHeader,
+    CardTitle,
+    CardDescription
+} from '@/components/ui/card';
 import {
     Select,
     SelectContent,
@@ -31,474 +22,442 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import {
-    ToggleGroup,
-    ToggleGroupItem,
-} from '@/components/ui/toggle-group';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Checkbox } from '@/components/ui/checkbox';
-import { ImageWithFallback } from '@/components/ImageWithFallback';
+    Sheet,
+    SheetContent,
+    SheetDescription,
+    SheetHeader,
+    SheetTitle,
+    SheetTrigger,
+} from '@/components/ui/sheet';
+import { Filter, ShoppingCart, Heart, Eye, ArrowRight, X, Star } from 'lucide-react';
 import { formatRupiah } from '@/lib/utils';
-import { List, LayoutGrid, Filter, Search } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 
-// Skeleton Component matching the grid layout
-const ShopPageSkeleton = () => (
-    <div className="grid gap-6 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-        {[...Array(10)].map((_, i) => (
-            <div key={i} className="flex flex-col space-y-3">
-                <Skeleton className="h-[250px] w-full rounded-xl bg-gray-200/50" />
-                <div className="space-y-2">
-                    <Skeleton className="h-4 w-3/4 bg-gray-200/50" />
-                    <Skeleton className="h-4 w-1/2 bg-gray-200/50" />
-                </div>
-            </div>
-        ))}
-    </div>
+// --- MOCK DATA ---
+const MOCK_CATEGORIES = [
+    "Print A3+", "Banner & Spanduk", "Merchandise", "Stempel", "Kartu Nama", "Brosur & Flyer", "Stiker & Label"
+];
+
+const MOCK_PRODUCTS = [
+    {
+        id: 1,
+        name: "Cetak A3+ Premium Art Paper",
+        slug: "cetak-a3-premium",
+        price: 5000,
+        category: "Print A3+",
+        image: "https://images.unsplash.com/photo-1626785774583-b61d526e156d?q=80&w=800&auto=format&fit=crop",
+        is_new: false,
+        rating: 4.8,
+        sold: 1200,
+        description: "Cetak A3+ dengan kualitas terbaik menggunakan mesin terbaru."
+    },
+    {
+        id: 2,
+        name: "X-Banner Standar 60x160cm",
+        slug: "x-banner-standar",
+        price: 85000,
+        category: "Banner & Spanduk",
+        image: "https://images.unsplash.com/photo-1563986768609-322da13575f3?q=80&w=800&auto=format&fit=crop",
+        is_new: true,
+        rating: 4.9,
+        sold: 450,
+        description: "Banner praktis untuk promosi indoor Anda."
+    },
+    {
+        id: 3,
+        name: "Kartu Nama 1 Sisi (Box)",
+        slug: "kartu-nama-1-sisi",
+        price: 35000,
+        category: "Kartu Nama",
+        image: "https://images.unsplash.com/photo-1596073419667-9d77d59f033f?q=80&w=800&auto=format&fit=crop",
+        is_new: false,
+        rating: 4.7,
+        sold: 2300,
+        description: "Kartu nama profesional, bahan Art Carton 260gr."
+    },
+    {
+        id: 4,
+        name: "Custom Mug Keramik",
+        slug: "custom-mug",
+        price: 25000,
+        category: "Merchandise",
+        image: "https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?q=80&w=800&auto=format&fit=crop",
+        is_new: false,
+        rating: 4.6,
+        sold: 890,
+        description: "Mug keramik berkualitas untuk kado atau souvenir."
+    },
+    {
+        id: 5,
+        name: "Stiker Vinyl A3+ (Kiss Cut)",
+        slug: "stiker-vinyl",
+        price: 15000,
+        category: "Stiker & Label",
+        image: "https://images.unsplash.com/photo-1572375992501-a6b525040d89?q=80&w=800&auto=format&fit=crop",
+        is_new: true,
+        rating: 4.9,
+        sold: 3400,
+        description: "Stiker vinyl tahan air, sudah termasuk cutting."
+    },
+    {
+        id: 6,
+        name: "Brosur A5 Art Paper 150gsm",
+        slug: "brosur-a5",
+        price: 500,
+        category: "Brosur & Flyer",
+        image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?q=80&w=800&auto=format&fit=crop",
+        is_new: false,
+        rating: 4.5,
+        sold: 5000,
+        description: "Media promosi efektif dan ekonomis."
+    },
+    {
+        id: 7,
+        name: "Roll Up Banner 60x160cm",
+        slug: "roll-up-banner",
+        price: 250000,
+        category: "Banner & Spanduk",
+        image: "https://images.unsplash.com/photo-1536924430914-91f9e2041b83?q=80&w=800&auto=format&fit=crop",
+        is_new: false,
+        rating: 5.0,
+        sold: 120,
+        description: "Banner premium dengan rangka aluminium yang kokoh."
+    },
+    {
+        id: 8,
+        name: "Stempel Flash Warna",
+        slug: "stempel-flash",
+        price: 65000,
+        category: "Stempel",
+        image: "https://images.unsplash.com/photo-1633534571026-62187d9f75fe?q=80&w=800&auto=format&fit=crop",
+        is_new: true,
+        rating: 4.8,
+        sold: 210,
+        description: "Stempel otomatis tanpa bantalan, praktis digunakan."
+    },
+];
+
+const ProductCardSkeleton = () => (
+    <Card className="overflow-hidden border-0 shadow-sm">
+        <div className="aspect-square bg-gray-100 animate-pulse" />
+        <CardContent className="p-4 space-y-3">
+            <div className="h-4 w-2/3 bg-gray-100 rounded animate-pulse" />
+            <div className="h-3 w-1/2 bg-gray-100 rounded animate-pulse" />
+            <div className="h-5 w-1/3 bg-gray-100 rounded animate-pulse mt-2" />
+        </CardContent>
+    </Card>
 );
 
-// Modern Filter Sidebar (Cleaner, Text-based)
-const FilterContent = ({ localFilters, setLocalFilters, applyFilters, resetFilters, categories, onCategoryChange }: {
-    localFilters: { category: string; priceRange: number[]; sort: string };
-    setLocalFilters: React.Dispatch<React.SetStateAction<{ category: string; priceRange: number[]; sort: string }>>;
-    applyFilters: () => void;
-    resetFilters: () => void;
-    categories: string[];
-    onCategoryChange: (category: string) => void;
-}) => {
-    return (
-        <div className="space-y-8 pr-6">
-            {/* Categories Section */}
-            <div className="space-y-4">
-                <h3 className="font-semibold text-gray-900 tracking-tight">Kategori</h3>
-                <div className="flex flex-col space-y-2">
-                    <button
-                        onClick={() => onCategoryChange('')}
-                        className={`text-left text-sm transition-colors hover:text-orange-600 ${localFilters.category === '' ? 'font-medium text-orange-600' : 'text-gray-600'}`}
-                    >
-                        Semua Kategori
-                    </button>
-                    {categories.map((category: string, index: number) => (
-                        <button
-                            key={index}
-                            onClick={() => onCategoryChange(category)}
-                            className={`text-left text-sm transition-colors hover:text-orange-600 ${localFilters.category === category ? 'font-medium text-orange-600' : 'text-gray-600'}`}
-                        >
-                            {category}
-                        </button>
-                    ))}
-                </div>
-            </div>
-
-            {/* Price Range Section */}
-            <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                    <h3 className="font-semibold text-gray-900 tracking-tight">Rentang Harga</h3>
-                </div>
-
-                <div className="flex items-center gap-3">
-                    <div className="relative flex-1">
-                        <span className="absolute left-3 top-2.5 text-sm text-gray-500">Rp</span>
-                        <Input
-                            type="number"
-                            min="0"
-                            placeholder="0"
-                            className="pl-9 h-10 w-full rounded-lg border-gray-300 bg-white text-base shadow-sm focus:border-orange-500 focus:ring-orange-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                            value={localFilters.priceRange[0] === 0 ? '' : localFilters.priceRange[0]}
-                            onChange={(e) => {
-                                const val = e.target.value === '' ? 0 : Number(e.target.value);
-                                // Ensure Min doesn't exceed Max (if Max is set)
-                                const maxPrice = localFilters.priceRange[1];
-                                if (maxPrice > 0 && val > maxPrice) {
-                                    // Optional: Prevent Min from exceeding Max immediately, or just update state
-                                    // For smoother UX, we usually allow typing but validate on blur or submit.
-                                    // But user requested "tak dapat kurang dari harga min" context for Max.
-                                    // Let's just update state normally here.
-                                }
-                                setLocalFilters(prev => ({ ...prev, priceRange: [val, prev.priceRange[1]] }));
-                            }}
-                        />
-                    </div>
-                    <span className="text-gray-400 font-medium">-</span>
-                    <div className="relative flex-1">
-                        <span className="absolute left-3 top-2.5 text-sm text-gray-500">Rp</span>
-                        <Input
-                            type="number"
-                            min={localFilters.priceRange[0]} // Set minimum value for Max input dynamically
-                            placeholder="Max"
-                            className="pl-9 h-10 w-full rounded-lg border-gray-300 bg-white text-base shadow-sm focus:border-orange-500 focus:ring-orange-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                            value={localFilters.priceRange[1] === 0 || localFilters.priceRange[1] === 1000000 ? '' : localFilters.priceRange[1]}
-                            onChange={(e) => {
-                                let val = e.target.value === '' ? 1000000 : Number(e.target.value);
-                                // Validation: If user types a value less than Min, we could either force it to Min or allow it but invalid state.
-                                // Given the request "harga max tidak dapat kurang dari harga min", logic here:
-                                // Real-time strict validation is annoying while typing (e.g. typing 1000 when min is 500 -> start with 1, it's < 500).
-                                // So we typically rely on onBlur or min attribute. 
-                                // However, to strictly satisfy "cannot be less", we can check on blur or submit.
-                                // But I will add the 'min' attribute which browser respects for spinners/validation, 
-                                // and logically checks during Apply.
-
-                                setLocalFilters(prev => ({ ...prev, priceRange: [prev.priceRange[0], val] }));
-                            }}
-                            onBlur={(e) => {
-                                // Enforce constraint on Blur (when user leaves field)
-                                let val = e.target.value === '' ? 1000000 : Number(e.target.value);
-                                if (val < localFilters.priceRange[0] && val !== 0 && val !== 1000000) {
-                                    setLocalFilters(prev => ({ ...prev, priceRange: [prev.priceRange[0], prev.priceRange[0]] }));
-                                }
-                            }}
-                        />
-                    </div>
-                </div>
-            </div>
-
-            {/* Actions */}
-            <div className="pt-4 border-t border-gray-100 flex flex-col gap-2">
-                <Button onClick={applyFilters} className="w-full bg-gray-900 hover:bg-black text-white">
-                    Terapkan Filter
-                </Button>
-                <Button onClick={resetFilters} variant="outline" className="w-full border-gray-200 hover:bg-gray-50">
-                    Hapus Filter
-                </Button>
-            </div>
-        </div>
-    );
-};
-
 export default function ShopPage() {
-    const { products: paginatedProducts, filters, categories } = usePage().props as {
-        products: {
-            data: Array<{
-                id_produk: number;
-                slug: string;
-                gambar: string;
-                nama_produk: string;
-                harga: number;
-                category: { name: string };
-            }>;
-            last_page: number;
-            links: Array<{ url: string | null; label: string; active: boolean }>;
-            total: number;
-            current_page: number;
-        };
-        filters: { category: string; min_price: number; max_price: number; sort: string };
-        categories: string[];
-    };
+    // State
+    const [isLoading, setIsLoading] = useState(true);
+    const [priceRange, setPriceRange] = useState([0, 1000000]);
+    const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+    const [sortBy, setSortBy] = useState('newest');
 
-    const [localFilters, setLocalFilters] = useState({
-        category: filters.category || '',
-        priceRange: [filters.min_price || 0, filters.max_price || 1000000],
-        sort: filters.sort || 'newest',
-    });
-
-    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-    const [drawerOpen, setDrawerOpen] = useState(false);
-    const [isLoading, setIsLoading] = useState(false); // Simulate loading state
-
-    const [isQuickViewOpen, setQuickViewOpen] = useState(false);
-    const [selectedProductSlug, setSelectedProductSlug] = useState<string | null>(null);
-
-    // Initial Loading Effect
+    // Mimic loading
     useEffect(() => {
-        setIsLoading(true);
         const timer = setTimeout(() => setIsLoading(false), 800);
         return () => clearTimeout(timer);
     }, []);
 
-    // Intercept navigation to show loading
-    useEffect(() => {
-        const removeStartListener = router.on('start', () => setIsLoading(true));
-        const removeFinishListener = router.on('finish', () => setIsLoading(false));
-        return () => {
-            removeStartListener();
-            removeFinishListener();
-        };
-    }, []);
-
-    const handleOpenQuickView = (slug: string) => {
-        setSelectedProductSlug(slug);
-        setQuickViewOpen(true);
-    };
-
-    const handleCloseQuickView = () => {
-        setQuickViewOpen(false);
-        setSelectedProductSlug(null);
-    };
-
-    const resetFilters = () => {
-        router.get(route('shop.index'), {}, {
-            preserveState: true,
-            onSuccess: () => setDrawerOpen(false),
+    // Filter Logic
+    const filteredProducts = useMemo(() => {
+        return MOCK_PRODUCTS.filter(product => {
+            const matchesCategory = selectedCategories.length === 0 || selectedCategories.includes(product.category);
+            const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1];
+            return matchesCategory && matchesPrice;
+        }).sort((a, b) => {
+            if (sortBy === 'price-asc') return a.price - b.price;
+            if (sortBy === 'price-desc') return b.price - a.price;
+            if (sortBy === 'rating') return b.rating - a.rating;
+            return 0; // newest/default
         });
-    };
+    }, [selectedCategories, priceRange, sortBy]);
 
-    const applyFilters = () => {
-        router.get(route('shop.index'), {
-            category: localFilters.category,
-            min_price: localFilters.priceRange[0],
-            max_price: localFilters.priceRange[1],
-            sort: localFilters.sort,
-        }, {
-            preserveState: true,
-            preserveScroll: true,
-            onSuccess: () => setDrawerOpen(false),
-        });
+    const toggleCategory = (category: string) => {
+        setSelectedCategories(prev =>
+            prev.includes(category)
+                ? prev.filter(c => c !== category)
+                : [...prev, category]
+        );
     };
-
-    const handleSortChange = (value: string) => {
-        setLocalFilters(prev => ({ ...prev, sort: value }));
-        router.get(route('shop.index'), {
-            ...filters,
-            sort: value,
-        }, { preserveState: true, preserveScroll: true });
-    };
-
-    // Handle category change with instant filtering
-    const handleCategoryChange = (category: string) => {
-        setLocalFilters(prev => ({ ...prev, category }));
-        router.get(route('shop.index'), {
-            ...filters,
-            category: category,
-        }, { preserveState: true, preserveScroll: true });
-    };
-
-    const displayedProducts = paginatedProducts.data;
 
     const containerVariants = {
         hidden: { opacity: 0 },
         visible: {
             opacity: 1,
-            transition: {
-                staggerChildren: 0.05
-            }
+            transition: { staggerChildren: 0.05 }
         }
     };
 
     const itemVariants = {
-        hidden: { opacity: 0, y: 20 },
-        visible: {
-            opacity: 1,
-            y: 0,
-            transition: { duration: 0.4 }
-        }
+        hidden: { opacity: 0, scale: 0.95 },
+        visible: { opacity: 1, scale: 1, transition: { duration: 0.3 } }
     };
 
     return (
         <SiteLayout>
-            <Head title="Produk & Jasa" />
-            <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-[1600px]">
-                {/* Header Section */}
-                <header className="mb-6 border-b pb-6">
-                    <motion.h1
-                        initial={{ opacity: 0, y: -20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5 }}
-                        className="text-3xl font-bold tracking-tight text-gray-900"
-                    >
-                        Semua Produk
-                    </motion.h1>
+            <Head title="Belanja Sekarang" />
 
-                    {/* Active Filters / Pills */}
-                    {(localFilters.category || localFilters.sort !== 'newest') && (
-                        <div className="flex flex-wrap gap-2 mt-4">
-                            {localFilters.category && (
-                                <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                                    {localFilters.category}
-                                    <button
-                                        onClick={() => setLocalFilters(prev => ({ ...prev, category: '' }))}
-                                        className="ml-2 hover:text-orange-950"
-                                    >
-                                        ×
-                                    </button>
-                                </div>
-                            )}
+            <div className="container mx-auto px-4 md:px-6 lg:px-8 py-8 min-h-screen">
+                {/* Simplified Header - No big title, straight to controls */}
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 py-4 border-b">
+                    <div>
+                        {/* Breadcrumb-like or simple indicator */}
+                        <p className="text-sm text-gray-500 mb-1">Produk & Jasa</p>
+                        <div className="flex items-center gap-2">
+                            <span className="font-semibold text-gray-900">{filteredProducts.length} Produk Ditampilkan</span>
                         </div>
-                    )}
-                </header>
+                    </div>
 
-                <div className="flex gap-12">
-                    {/* Clean Sidebar for Desktop */}
-                    <aside className="hidden lg:block w-64 flex-shrink-0">
-                        <motion.div
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ duration: 0.5, delay: 0.2 }}
-                        >
-                            <FilterContent
-                                localFilters={localFilters}
-                                setLocalFilters={setLocalFilters}
-                                applyFilters={applyFilters}
-                                resetFilters={resetFilters}
-                                categories={categories}
-                                onCategoryChange={handleCategoryChange}
-                            />
-                        </motion.div>
+                    <div className="flex items-center gap-3 w-full md:w-auto">
+                        <Sheet>
+                            <SheetTrigger asChild>
+                                <Button variant="outline" className="lg:hidden w-full md:w-auto">
+                                    <Filter className="h-4 w-4 mr-2" />
+                                    Filter
+                                </Button>
+                            </SheetTrigger>
+                            <SheetContent side="left">
+                                <SheetHeader>
+                                    <SheetTitle>Filter Produk</SheetTitle>
+                                    <SheetDescription>Sesuaikan tampilan produk</SheetDescription>
+                                </SheetHeader>
+                                {/* Reusing Sidebar Logic for Mobile */}
+                                <div className="mt-6 space-y-6">
+                                    <div className="space-y-3">
+                                        <h3 className="font-medium text-sm text-gray-900">Kategori</h3>
+                                        <div className="grid gap-2">
+                                            {MOCK_CATEGORIES.map(category => (
+                                                <div key={category} className="flex items-center space-x-2">
+                                                    <Checkbox
+                                                        id={`m-${category}`}
+                                                        checked={selectedCategories.includes(category)}
+                                                        onCheckedChange={() => toggleCategory(category)}
+                                                    />
+                                                    <label htmlFor={`m-${category}`} className="text-sm cursor-pointer">{category}</label>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <Separator />
+                                    <div className="space-y-4">
+                                        <h3 className="font-medium text-sm text-gray-900">Harga</h3>
+                                        <Slider
+                                            defaultValue={[0, 1000000]}
+                                            max={2000000}
+                                            step={10000}
+                                            value={priceRange}
+                                            onValueChange={setPriceRange}
+                                        />
+                                        <div className="flex justify-between text-xs text-gray-500">
+                                            <span>{formatRupiah(priceRange[0])}</span>
+                                            <span>{formatRupiah(priceRange[1])}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </SheetContent>
+                        </Sheet>
+
+                        <Select value={sortBy} onValueChange={setSortBy}>
+                            <SelectTrigger className="w-full md:w-[180px]">
+                                <SelectValue placeholder="Urutkan" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="newest">Terbaru</SelectItem>
+                                <SelectItem value="price-asc">Harga Terendah</SelectItem>
+                                <SelectItem value="price-desc">Harga Tertinggi</SelectItem>
+                                <SelectItem value="rating">Rating Tertinggi</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+
+                <div className="flex gap-8 items-start">
+                    {/* --- DESKTOP SIDEBAR --- */}
+                    <aside className="hidden lg:block w-64 flex-shrink-0 sticky top-32">
+                        <Card className="border-none shadow-none bg-transparent">
+                            <CardHeader className="px-0 pt-0">
+                                <CardTitle className="text-lg">Filter</CardTitle>
+                            </CardHeader>
+                            <CardContent className="px-0 space-y-8">
+                                {/* Categories */}
+                                <div className="space-y-4">
+                                    <h3 className="font-medium text-sm text-gray-900">Kategori</h3>
+                                    <div className="space-y-2">
+                                        {MOCK_CATEGORIES.map((category) => (
+                                            <div key={category} className="flex items-center space-x-2">
+                                                <Checkbox
+                                                    id={`d-${category}`}
+                                                    checked={selectedCategories.includes(category)}
+                                                    onCheckedChange={() => toggleCategory(category)}
+                                                    className="border-gray-300 data-[state=checked]:bg-orange-600 data-[state=checked]:border-orange-600"
+                                                />
+                                                <label
+                                                    htmlFor={`d-${category}`}
+                                                    className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer text-gray-600 hover:text-gray-900"
+                                                >
+                                                    {category}
+                                                </label>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <Separator />
+
+                                {/* Price */}
+                                <div className="space-y-4">
+                                    <h3 className="font-medium text-sm text-gray-900">Rentang Harga</h3>
+                                    <Slider
+                                        defaultValue={[0, 1000000]}
+                                        max={2000000}
+                                        step={10000}
+                                        value={priceRange}
+                                        onValueChange={setPriceRange}
+                                        className="py-4"
+                                    />
+                                    <div className="flex items-center justify-between gap-2">
+                                        <div className="bg-gray-50 rounded px-2 py-1 text-xs text-gray-600 w-24 text-center">
+                                            {formatRupiah(priceRange[0])}
+                                        </div>
+                                        <span className="text-gray-400">-</span>
+                                        <div className="bg-gray-50 rounded px-2 py-1 text-xs text-gray-600 w-24 text-center">
+                                            {formatRupiah(priceRange[1])}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <Button
+                                    variant="outline"
+                                    className="w-full text-xs h-8"
+                                    onClick={() => {
+                                        setSelectedCategories([]);
+                                        setPriceRange([0, 1000000]);
+                                    }}
+                                    disabled={selectedCategories.length === 0 && priceRange[0] === 0 && priceRange[1] === 1000000}
+                                >
+                                    Reset Filter
+                                </Button>
+                            </CardContent>
+                        </Card>
                     </aside>
 
+                    {/* --- PRODUCT GRID --- */}
                     <main className="flex-1">
-                        {/* Sort & Mobile Filter Toggle */}
-                        <div className="flex justify-between items-center mb-6">
-                            <div className="text-sm text-gray-500">
-                                {paginatedProducts.total} produk ditemukan
-                            </div>
-
-                            <div className="flex items-center gap-2">
-                                <Select onValueChange={handleSortChange} value={localFilters.sort}>
-                                    <SelectTrigger className="w-[180px] border-none shadow-none font-medium text-gray-700 hover:bg-gray-50 focus:ring-0">
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-gray-400 font-normal">Urutkan:</span>
-                                            <SelectValue placeholder="Urutkan" />
-                                        </div>
-                                    </SelectTrigger>
-                                    <SelectContent align="end">
-                                        <SelectItem value="newest">Terbaru</SelectItem>
-                                        <SelectItem value="price-low">Harga: Rendah ke Tinggi</SelectItem>
-                                        <SelectItem value="price-high">Harga: Tinggi ke Rendah</SelectItem>
-                                    </SelectContent>
-                                </Select>
-
-                                <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
-                                    <DrawerTrigger asChild className="lg:hidden">
-                                        <Button variant="outline" size="icon">
-                                            <Filter className="h-4 w-4" />
-                                        </Button>
-                                    </DrawerTrigger>
-                                    <DrawerContent>
-                                        <DrawerHeader>
-                                            <DrawerTitle>Filter Produk</DrawerTitle>
-                                        </DrawerHeader>
-                                        <div className="px-4">
-                                            <FilterContent
-                                                localFilters={localFilters}
-                                                setLocalFilters={setLocalFilters}
-                                                applyFilters={applyFilters}
-                                                resetFilters={resetFilters}
-                                                categories={categories}
-                                                onCategoryChange={handleCategoryChange}
-                                            />
-                                        </div>
-                                    </DrawerContent>
-                                </Drawer>
-                            </div>
-                        </div>
-
-                        {/* Products Grid with Skeleton State */}
                         {isLoading ? (
-                            <ShopPageSkeleton />
+                            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                                {[...Array(6)].map((_, i) => <ProductCardSkeleton key={i} />)}
+                            </div>
                         ) : (
                             <motion.div
-                                key={JSON.stringify(localFilters) + paginatedProducts.current_page} // Re-animate on filter/page change
                                 variants={containerVariants}
                                 initial="hidden"
                                 animate="visible"
-                                className="grid gap-x-6 gap-y-10 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+                                className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6"
                             >
-                                <AnimatePresence mode="wait">
-                                    {displayedProducts.map((product) => (
-                                        <motion.div key={product.id_produk} variants={itemVariants} layout>
-                                            <ProductCard
-                                                product={product}
-                                                onQuickView={handleOpenQuickView}
-                                                className="h-full border-none shadow-none hover:shadow-lg transition-shadow duration-200 bg-transparent"
-                                            />
+                                <AnimatePresence mode="popLayout">
+                                    {filteredProducts.map((product) => (
+                                        <motion.div key={product.id} variants={itemVariants} layout>
+                                            <Card className="group h-full flex flex-col overflow-hidden border-gray-100 hover:border-orange-200 hover:shadow-lg transition-all duration-300">
+                                                {/* Image Section */}
+                                                <div className="relative aspect-square overflow-hidden bg-gray-50">
+                                                    <img
+                                                        src={product.image}
+                                                        alt={product.name}
+                                                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                                    />
+
+                                                    {/* Floating Badge */}
+                                                    {product.is_new && (
+                                                        <Badge className="absolute top-3 left-3 bg-orange-600 hover:bg-orange-700">
+                                                            Baru
+                                                        </Badge>
+                                                    )}
+
+                                                    {/* Quick Actions (Slide Up) */}
+                                                    <div className="absolute inset-x-0 bottom-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300 bg-gradient-to-t from-black/60 to-transparent flex justify-center gap-2">
+                                                        <Button size="icon" variant="secondary" className="h-9 w-9 rounded-full bg-white text-gray-900 hover:bg-orange-50 hover:text-orange-600">
+                                                            <Eye className="h-4 w-4" />
+                                                            <span className="sr-only">Quick View</span>
+                                                        </Button>
+                                                        <Button size="icon" variant="secondary" className="h-9 w-9 rounded-full bg-white text-gray-900 hover:bg-orange-50 hover:text-orange-600">
+                                                            <ShoppingCart className="h-4 w-4" />
+                                                            <span className="sr-only">Add to Cart</span>
+                                                        </Button>
+                                                    </div>
+                                                </div>
+
+                                                {/* Details */}
+                                                <CardHeader className="p-4 pb-0">
+                                                    <div className="flex justify-between items-start mb-1">
+                                                        <span className="text-xs font-medium text-orange-600 truncate max-w-[70%]">
+                                                            {product.category}
+                                                        </span>
+                                                        {/* Rating */}
+                                                        <div className="flex items-center text-xs text-yellow-500">
+                                                            <Star className="h-3 w-3 fill-current mr-1" />
+                                                            {product.rating}
+                                                        </div>
+                                                    </div>
+                                                    <Link href={`/products/${product.slug}`} className="hover:underline decoration-orange-500 underline-offset-4">
+                                                        <CardTitle className="text-base font-semibold text-gray-900 line-clamp-2 leading-tight group-hover:text-orange-600 transition-colors">
+                                                            {product.name}
+                                                        </CardTitle>
+                                                    </Link>
+                                                </CardHeader>
+
+                                                <CardContent className="p-4 pt-2 flex-grow">
+                                                    <CardDescription className="line-clamp-2 text-xs mb-3">
+                                                        {product.description}
+                                                    </CardDescription>
+                                                    <div className="text-lg font-bold text-gray-900">
+                                                        {formatRupiah(product.price)}
+                                                    </div>
+                                                </CardContent>
+
+                                                <CardFooter className="p-4 pt-0">
+                                                    <Button className="w-full bg-gray-900 hover:bg-orange-600 text-white transition-colors group-hover:shadow-md">
+                                                        Lihat Detail
+                                                    </Button>
+                                                </CardFooter>
+                                            </Card>
                                         </motion.div>
                                     ))}
                                 </AnimatePresence>
+
+                                {/* Empty State */}
+                                {filteredProducts.length === 0 && (
+                                    <motion.div
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        className="col-span-full flex flex-col items-center justify-center py-16 text-center"
+                                    >
+                                        <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                                            <Filter className="h-6 w-6 text-gray-300" />
+                                        </div>
+                                        <h3 className="text-lg font-medium text-gray-900">Tidak ada produk ditemukan</h3>
+                                        <p className="text-gray-500 text-sm mt-1 mb-4">
+                                            Coba sesuaikan filter kategori atau harga Anda.
+                                        </p>
+                                        <Button
+                                            variant="outline"
+                                            onClick={() => {
+                                                setSelectedCategories([]);
+                                                setPriceRange([0, 1000000]);
+                                            }}
+                                        >
+                                            Reset Filter
+                                        </Button>
+                                    </motion.div>
+                                )}
                             </motion.div>
                         )}
-
-                        {/* Empty State */}
-                        {!isLoading && displayedProducts.length === 0 && (
-                            <div className="py-20 text-center">
-                                <div className="mx-auto h-24 w-24 text-gray-200 mb-4">
-                                    <Search className="h-full w-full" />
-                                </div>
-                                <h3 className="text-lg font-medium text-gray-900">Tidak ada produk ditemukan</h3>
-                                <p className="mt-1 text-gray-500">Coba ubah filter atau kata kunci pencarian Anda.</p>
-                                <Button onClick={resetFilters} variant="link" className="mt-4 text-orange-600">
-                                    Hapus semua filter
-                                </Button>
-                            </div>
-                        )}
-
-                        {/* Pagination */}
-                        <div className="mt-12 border-t pt-8">
-                            {paginatedProducts?.last_page > 1 && (
-                                <Pagination>
-                                    <PaginationContent>
-                                        {paginatedProducts.links.map((link, index) => {
-                                            const isPrevious = link.label.includes('&laquo;') || link.label.includes('Previous');
-                                            const isNext = link.label.includes('&raquo;') || link.label.includes('Next');
-
-                                            // Handle Previous
-                                            if (isPrevious) {
-                                                return (
-                                                    <PaginationItem key={index}>
-                                                        {link.url ? (
-                                                            <PaginationPrevious href={link.url} />
-                                                        ) : (
-                                                            <Button variant="ghost" disabled className="gap-1 pl-2.5" size="default">
-                                                                <span className="h-4 w-4" />
-                                                                <span>Previous</span>
-                                                            </Button>
-                                                        )}
-                                                    </PaginationItem>
-                                                );
-                                            }
-
-                                            // Handle Next
-                                            if (isNext) {
-                                                return (
-                                                    <PaginationItem key={index}>
-                                                        {link.url ? (
-                                                            <PaginationNext href={link.url} />
-                                                        ) : (
-                                                            <Button variant="ghost" disabled className="gap-1 pr-2.5" size="default">
-                                                                <span>Next</span>
-                                                                <span className="h-4 w-4" />
-                                                            </Button>
-                                                        )}
-                                                    </PaginationItem>
-                                                );
-                                            }
-
-                                            // Handle Ellipsis
-                                            if (link.label === '...') {
-                                                return (
-                                                    <PaginationItem key={index}>
-                                                        <PaginationEllipsis />
-                                                    </PaginationItem>
-                                                );
-                                            }
-
-                                            // Handle Standard Page Number
-                                            return (
-                                                <PaginationItem key={index}>
-                                                    <PaginationLink
-                                                        href={link.url || '#'}
-                                                        isActive={link.active}
-                                                        className={!link.url ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-                                                        size="icon"
-                                                    >
-                                                        {link.label}
-                                                    </PaginationLink>
-                                                </PaginationItem>
-                                            );
-                                        })}
-                                    </PaginationContent>
-                                </Pagination>
-                            )}
-                        </div>
                     </main>
                 </div>
             </div>
-            {selectedProductSlug && (
-                <ProductQuickView
-                    productSlug={selectedProductSlug}
-                    isOpen={isQuickViewOpen}
-                    onClose={handleCloseQuickView}
-                />
-            )}
         </SiteLayout>
     );
 }
