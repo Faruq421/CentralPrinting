@@ -30,9 +30,7 @@ Route::get('/portfolio', [\App\Features\Portfolio\PortfolioController::class, 'i
 
 // Rute khusus Admin
 Route::middleware(['auth', 'role:admin'])->group(function () {
-    Route::get('/dashboard', function () {
-        return \Inertia\Inertia::render('dashboard');
-    })->name('dashboard');
+    Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
 });
 
 

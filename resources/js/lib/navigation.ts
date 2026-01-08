@@ -1,13 +1,30 @@
 import { type NavItem } from "@/types";
-import { dashboard } from "@/routes"; // Impor fungsi route dashboard
+import { dashboard } from "@/routes";
 import { route } from 'ziggy-js';
-import { LayoutGrid, Package, MapPin } from "lucide-react"; // Impor ikon
+import {
+    LayoutGrid,
+    ShoppingBag,
+    Package,
+    Users,
+    Star,
+    MapPin,
+    Settings,
+    FileText
+} from "lucide-react";
 
-export const mainNavItems: NavItem[] = [
+export const overviewNavItems: NavItem[] = [
     {
         title: 'Dashboard',
         href: dashboard().url,
         icon: LayoutGrid,
+    },
+];
+
+export const commerceNavItems: NavItem[] = [
+    {
+        title: 'Orders',
+        href: route('orders.index', undefined, false),
+        icon: ShoppingBag,
     },
     {
         title: 'Products',
@@ -17,22 +34,20 @@ export const mainNavItems: NavItem[] = [
     {
         title: 'Customers',
         href: route('customers.index', undefined, false),
-        icon: Package,
-    },
-    {
-        title: 'Orders',
-        href: route('orders.index', undefined, false),
-        icon: Package,
+        icon: Users,
     },
     {
         title: 'Reviews',
         href: route('reviews.index', undefined, false),
-        icon: Package,
+        icon: Star,
     },
+];
+
+export const operationalNavItems: NavItem[] = [
     {
-        title: 'Lokasi Toko',
+        title: 'Toko & Lokasi',
         href: route('stores.index', undefined, false),
         icon: MapPin,
     },
-    // LINK BARU AKAN DITAMBAHKAN SECARA OTOMATIS DI SINI
+    // Future: Reports, Settings etc.
 ];

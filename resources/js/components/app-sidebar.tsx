@@ -7,9 +7,7 @@ import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
 import { BookOpen, Folder } from 'lucide-react';
 import AppLogo from './app-logo';
-import { mainNavItems } from '@/lib/navigation';
-
-
+import { overviewNavItems, commerceNavItems, operationalNavItems } from '@/lib/navigation';
 
 const footerNavItems: NavItem[] = [
     {
@@ -40,7 +38,9 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                <NavMain items={mainNavItems} />
+                <NavMain items={overviewNavItems} label="Overview" />
+                <NavMain items={commerceNavItems} label="Commerce" />
+                <NavMain items={operationalNavItems} label="Operational" />
             </SidebarContent>
 
             <SidebarFooter>
