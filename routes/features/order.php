@@ -12,17 +12,24 @@ Route::prefix('shipping')->name('shipping.')->group(function () {
     Route::post('/all-options', [RajaOngkirController::class, 'getAllShippingOptions'])->name('all-options');
 });
 
+// Rute untuk Customer (checkout, my-orders, payment update)
 Route::middleware(['auth'])->group(function () {
     Route::get('/checkout', [OrderController::class, 'create'])->name('checkout.create');
     Route::post('/checkout', [OrderController::class, 'store'])->name('checkout.store');
-    // Rute BARU untuk halaman "Pesanan Saya" pelanggan
-    Route::get('/my-orders', [OrderController::class, 'myOrders'])
-        ->middleware(['auth']) // Pastikan hanya user terotentikasi
-        ->name('orders.my');   // Kita beri nama 'orders.my' untuk Ziggy
+    
+    // Rute untuk halaman "Pesanan Saya" pelanggan
+    Route::get('/my-orders', [OrderController::class, 'myOrders'])->name('orders.my');
+    
+    // Rute untuk detail pesanan customer (harus di atas rute resource admin)
+    Route::get('/my-orders/{order}', [OrderController::class, 'show'])->name('orders.show');
     
     // Route untuk update status pembayaran setelah sukses dari Midtrans
     Route::post('/orders/{order}/mark-paid', [OrderController::class, 'markAsPaid'])
         ->name('orders.markPaid');
 });
 
-Route::resource('orders', OrderController::class)->middleware(['auth', 'verified']);
+// Rute untuk Admin (CRUD orders - index, create, edit, update, destroy)
+// Exclude 'show' karena sudah didefinisikan di atas untuk customer
+Route::resource('orders', OrderController::class)
+    ->middleware(['auth', 'verified', 'role:admin'])
+    ->except(['show']);

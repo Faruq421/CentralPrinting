@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class CartController extends Controller
@@ -257,9 +258,6 @@ class CartController extends Controller
      */
     private function getVariantDetails($variantData): array
     {
-        // This is a placeholder. In a real application, you would fetch
-        // the attribute values from the database to get their names and price modifiers.
-        // For now, we'll just format the data.
         if (empty($variantData)) {
             return ['price_modifier' => 0, 'details' => []];
         }
@@ -267,13 +265,28 @@ class CartController extends Controller
         $details = [];
         $price_modifier = 0;
 
-        // Assuming variantData is ['attribute_id' => 'value_id', ...]
-        // You would need to query your database to get the actual names and prices.
+        // Query database untuk mendapatkan harga dari setiap attribute value
         foreach ($variantData as $attributeId => $valueId) {
-            // Placeholder logic
-            $details[] = "Option {$attributeId}: Value {$valueId}";
+            $attributeValue = \App\Features\Product\AttributeValue::with('attribute')->find($valueId);
+            
+            if ($attributeValue) {
+                // Ambil harga dari pivot table product_attribute_value
+                // Kita perlu mencari product_id yang sesuai, tapi karena ini dipanggil dari store/update
+                // kita bisa langsung query pivot dengan asumsi harga sama untuk semua produk dengan attribute value ini
+                // Atau kita bisa pass product_id sebagai parameter
+                
+                // Untuk saat ini, kita ambil harga pertama yang ditemukan untuk attribute value ini
+                $pivotData = DB::table('product_attribute_value')
+                    ->where('attribute_value_id', $valueId)
+                    ->first();
+                
+                if ($pivotData && isset($pivotData->price)) {
+                    $price_modifier += $pivotData->price;
+                }
+                
+                $details[] = $attributeValue->attribute->name . ': ' . $attributeValue->value;
+            }
         }
-
 
         return [
             'price_modifier' => $price_modifier,

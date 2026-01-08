@@ -381,7 +381,7 @@ export default function Show({ order }: PageProps<{ order: Order }>) {
                                 <div>
                                     <h3 className="text-sm font-medium text-muted-foreground mb-2">Informasi Produk</h3>
                                     <div className="flex gap-4">
-                                        <div className="h-24 w-24 rounded-lg bg-white overflow-hidden border p-1">
+                                        <div className="h-24 w-24 flex-shrink-0 rounded-lg bg-white overflow-hidden border p-1">
                                             {selectedItem.product?.gambar_url ? (
                                                 <img
                                                     src={selectedItem.product.gambar_url}
@@ -396,7 +396,6 @@ export default function Show({ order }: PageProps<{ order: Order }>) {
                                         </div>
                                         <div>
                                             <div className="font-bold">{selectedItem.product?.nama_produk || 'Product'}</div>
-                                            <div className="text-sm text-slate-500 mt-1">{selectedItem.product?.deskripsi || ''}</div>
                                             <div className="mt-2 font-medium text-primary">{formatCurrency(selectedItem.price)} x {selectedItem.quantity}</div>
                                         </div>
                                     </div>

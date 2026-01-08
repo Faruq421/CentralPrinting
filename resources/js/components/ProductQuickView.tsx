@@ -196,8 +196,23 @@ export function ProductQuickView({ productSlug, cartItemId, isOpen, onClose }: P
                     setProduct(productData);
 
                     // Pre-populate state from cart item data
+                    console.log('=== EDIT MODE DEBUG ===');
+                    console.log('itemOptions:', itemOptions);
+                    console.log('itemOptions.variant:', itemOptions.variant);
+                    console.log('productData.attribute_values:', productData.attribute_values);
+
                     setQuantity(itemOptions.quantity || 1);
-                    setSelectedOptions(itemOptions.variant || {});
+
+                    // Normalize variant keys to numbers (in case they're stored as strings)
+                    const normalizedVariant: Record<string, number> = {};
+                    if (itemOptions.variant) {
+                        Object.entries(itemOptions.variant).forEach(([key, value]) => {
+                            normalizedVariant[Number(key)] = Number(value);
+                        });
+                    }
+                    console.log('normalizedVariant:', normalizedVariant);
+                    setSelectedOptions(normalizedVariant);
+
                     setNote(itemOptions.note || "");
 
                     if (itemOptions.design?.type === 'template' && productData.design_templates) {
@@ -221,6 +236,13 @@ export function ProductQuickView({ productSlug, cartItemId, isOpen, onClose }: P
             })
             .finally(() => setIsLoading(false));
     }, [isOpen, productSlug, cartItemId, isEditMode, onClose]); // Removed resetState to prevent re-fetch on file upload
+
+    // Debug: Log selectedOptions whenever it changes
+    useEffect(() => {
+        if (Object.keys(selectedOptions).length > 0) {
+            console.log('selectedOptions state updated:', selectedOptions);
+        }
+    }, [selectedOptions]);
 
 
     // --- Logika Atribut & Harga ---
@@ -333,7 +355,16 @@ export function ProductQuickView({ productSlug, cartItemId, isOpen, onClose }: P
             onSuccess: () => {
                 toast.success(isEditMode ? 'Keranjang berhasil diperbarui.' : `${product.nama_produk} berhasil ditambahkan.`);
                 setIsSubmitting(false);
-                onClose();
+
+                // Untuk mode edit, tutup modal setelah delay singkat agar user melihat toast
+                // Untuk mode tambah, langsung tutup
+                if (isEditMode) {
+                    setTimeout(() => {
+                        onClose();
+                    }, 500); // Delay 500ms agar toast terlihat
+                } else {
+                    onClose();
+                }
             },
             onError: (errors) => {
                 console.error("Cart Action Error:", errors);
@@ -433,7 +464,11 @@ export function ProductQuickView({ productSlug, cartItemId, isOpen, onClose }: P
                                             )}
                                         </Label>
                                     </div>
-                                    <RadioGroup onValueChange={(valueId) => handleOptionChange(values[0].attribute.id.toString(), Number(valueId))} className='flex flex-wrap gap-2'>
+                                    <RadioGroup
+                                        value={selectedOptions[values[0].attribute.id]?.toString()}
+                                        onValueChange={(valueId) => handleOptionChange(values[0].attribute.id.toString(), Number(valueId))}
+                                        className='flex flex-wrap gap-2'
+                                    >
                                         {values.map((value) => {
                                             const isSelected = selectedOptions[values[0].attribute.id] === value.id;
                                             return (
