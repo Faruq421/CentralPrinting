@@ -1,12 +1,23 @@
-import React from 'react';
-import { Head, Link, usePage } from '@inertiajs/react';
+import React, { useState } from 'react';
+import { Head, Link, usePage, router } from '@inertiajs/react';
 import { type PageProps } from '@/types';
 import { route } from 'ziggy-js';
 import SiteLayout from '@/layouts/SiteLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Package, CheckCircle, Truck, Hourglass } from 'lucide-react';
+import { Package, CheckCircle, Truck, Hourglass, XCircle, Loader2 } from 'lucide-react';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 // Tentukan tipe data dasar untuk props
 interface OrderItemProduct {
@@ -52,15 +63,41 @@ const getStatusBadge = (status: string) => {
         case 'processing':
             return <Badge variant="secondary"><Hourglass className="mr-2 h-4 w-4" />Diproses</Badge>;
         case 'cancelled':
-            return <Badge variant="destructive">Dibatalkan</Badge>;
+            return <Badge variant="destructive"><XCircle className="mr-2 h-4 w-4" />Dibatalkan</Badge>;
         default:
             return <Badge variant="outline"><Package className="mr-2 h-4 w-4" />Menunggu</Badge>;
     }
 };
 
+const formatCurrency = (value: number | string) => {
+    const numberValue = typeof value === 'string' ? parseFloat(value) : value;
+    return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+    }).format(numberValue);
+};
+
 export default function MyOrdersPage() {
     // Ambil data 'orders' yang dikirim dari controller
     const { orders } = usePage<{ orders: PaginatedOrders }>().props;
+    const [cancellingOrderId, setCancellingOrderId] = useState<number | null>(null);
+
+    // Handle cancel order
+    const handleCancelOrder = (orderId: number) => {
+        setCancellingOrderId(orderId);
+        router.post(route('orders.cancel', orderId), {}, {
+            preserveScroll: true,
+            onFinish: () => setCancellingOrderId(null),
+        });
+    };
+
+    // Check if order can be cancelled
+    const canCancelOrder = (order: Order) => {
+        return order.payment_status === 'unpaid' &&
+            !['cancelled', 'completed'].includes(order.order_status?.toLowerCase());
+    };
 
     return (
         <SiteLayout>
@@ -87,7 +124,8 @@ export default function MyOrdersPage() {
                                                 order.payment_status === 'unpaid' ? 'text-red-600 border-red-200 bg-red-50' :
                                                     'text-gray-600'
                                         }>
-                                            {order.payment_status}
+                                            {order.payment_status === 'paid' ? 'Sudah Dibayar' :
+                                                order.payment_status === 'unpaid' ? 'Belum Dibayar' : order.payment_status}
                                         </Badge>
                                         {getStatusBadge(order.order_status)}
                                     </div>
@@ -97,7 +135,7 @@ export default function MyOrdersPage() {
                                         {order.items.map(item => (
                                             <li key={item.id} className="flex justify-between items-center">
                                                 <span className="text-gray-700">{item.product?.nama_produk || 'Produk dihapus'} (x{item.quantity})</span>
-                                                <span className="font-medium">Rp {item.price.toLocaleString('id-ID')}</span>
+                                                <span className="font-medium">{formatCurrency(item.price)}</span>
                                             </li>
                                         ))}
                                     </ul>
@@ -105,7 +143,7 @@ export default function MyOrdersPage() {
                                     <div className="border-t pt-4 flex justify-between items-center">
                                         <span className="text-gray-600">Total Pesanan</span>
                                         <span className="text-xl font-bold text-gray-800">
-                                            Rp {order.total_price.toLocaleString('id-ID')}
+                                            {formatCurrency(order.total_price)}
                                         </span>
                                     </div>
 
@@ -120,6 +158,48 @@ export default function MyOrdersPage() {
                                     )}
                                 </CardContent>
                                 <CardFooter className="bg-gray-50 border-t p-4 flex justify-end space-x-2">
+                                    {/* Tombol Batalkan Pesanan - hanya tampil jika unpaid */}
+                                    {canCancelOrder(order) && (
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button
+                                                    variant="destructive"
+                                                    size="sm"
+                                                    disabled={cancellingOrderId === order.id}
+                                                >
+                                                    {cancellingOrderId === order.id ? (
+                                                        <>
+                                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                            Membatalkan...
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <XCircle className="mr-2 h-4 w-4" />
+                                                            Batalkan Pesanan
+                                                        </>
+                                                    )}
+                                                </Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Batalkan Pesanan #{order.id}?</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        Apakah Anda yakin ingin membatalkan pesanan ini? Tindakan ini tidak dapat dibatalkan.
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>Tidak, Kembali</AlertDialogCancel>
+                                                    <AlertDialogAction
+                                                        onClick={() => handleCancelOrder(order.id)}
+                                                        className="bg-red-600 hover:bg-red-700"
+                                                    >
+                                                        Ya, Batalkan Pesanan
+                                                    </AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+                                    )}
+
                                     {/* Tautkan ke halaman detail pesanan jika ada */}
                                     <Button asChild variant="outline">
                                         <Link href={route('orders.show', order.id)}>Lihat Detail</Link>

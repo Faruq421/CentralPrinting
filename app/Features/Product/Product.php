@@ -24,6 +24,7 @@ class Product extends Model
         'gambar',
         'category_id',
         'status',
+        'is_active', // <-- Tambahkan is_active
         'allow_custom_design',
         'enable_design_feature',
     ];
@@ -92,6 +93,7 @@ class Product extends Model
 
     protected $casts = [
         'status' => 'boolean',
+        'is_active' => 'boolean',
         'allow_custom_design' => 'boolean',
         'enable_design_feature' => 'boolean',
     ];

@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
-    MoreHorizontal, Eye, Pencil, Trash2, Search, Package, Truck, CheckCircle, XCircle, Clock, CreditCard, Ban,
+    MoreHorizontal, Eye, Pencil, Search, Package, Truck, CheckCircle, XCircle, Clock, CreditCard, Ban,
     Loader2
 } from 'lucide-react';
 import debounce from 'lodash.debounce';
@@ -203,12 +203,8 @@ export default function Index({ items, filters }: PageProps<{ items: Pagination<
         return PAYMENT_STATUSES.find(s => s.value === status) || PAYMENT_STATUSES[0];
     };
 
-    // Delete order
-    const handleDelete = (order: Order) => {
-        if (confirm(`Apakah Anda yakin ingin menghapus pesanan #${order.id}?`)) {
-            router.delete(route('orders.destroy', order.id));
-        }
-    };
+    // NOTE: Pesanan tidak dapat dihapus untuk menjaga integritas data
+    // Fungsi hapus dihapus karena pesanan dari pelanggan tidak boleh dihapus
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -302,30 +298,40 @@ export default function Index({ items, filters }: PageProps<{ items: Pagination<
                                                         <div className="text-sm text-muted-foreground">{order.user?.email || ''}</div>
                                                     </TableCell>
                                                     <TableCell>
-                                                        <DropdownMenu>
-                                                            <DropdownMenuTrigger asChild>
-                                                                <Button variant="ghost" className="h-8 p-0">
-                                                                    <Badge className={`${statusConfig.color} border cursor-pointer transition-all duration-200`}>
-                                                                        <StatusIcon className="h-3 w-3 mr-1" />
-                                                                        {statusConfig.label}
-                                                                    </Badge>
-                                                                </Button>
-                                                            </DropdownMenuTrigger>
-                                                            <DropdownMenuContent align="start">
-                                                                <DropdownMenuLabel>Ubah Status</DropdownMenuLabel>
-                                                                <DropdownMenuSeparator />
-                                                                {ORDER_STATUSES.map((status) => (
-                                                                    <DropdownMenuItem
-                                                                        key={status.value}
-                                                                        onClick={() => handleQuickStatusUpdate(order, status.value)}
-                                                                        disabled={order.order_status === status.value}
-                                                                    >
-                                                                        <status.icon className="h-4 w-4 mr-2" />
-                                                                        {status.label}
-                                                                    </DropdownMenuItem>
-                                                                ))}
-                                                            </DropdownMenuContent>
-                                                        </DropdownMenu>
+                                                        {/* Status Pesanan - Hanya bisa diubah jika sudah paid */}
+                                                        {order.payment_status === 'paid' ? (
+                                                            <DropdownMenu>
+                                                                <DropdownMenuTrigger asChild>
+                                                                    <Button variant="ghost" className="h-8 p-0">
+                                                                        <Badge className={`${statusConfig.color} border cursor-pointer transition-all duration-200`}>
+                                                                            <StatusIcon className="h-3 w-3 mr-1" />
+                                                                            {statusConfig.label}
+                                                                        </Badge>
+                                                                    </Button>
+                                                                </DropdownMenuTrigger>
+                                                                <DropdownMenuContent align="start">
+                                                                    <DropdownMenuLabel>Ubah Status</DropdownMenuLabel>
+                                                                    <DropdownMenuSeparator />
+                                                                    {/* Filter out 'cancelled' - admin tidak bisa cancel */}
+                                                                    {ORDER_STATUSES.filter(status => status.value !== 'cancelled').map((status) => (
+                                                                        <DropdownMenuItem
+                                                                            key={status.value}
+                                                                            onClick={() => handleQuickStatusUpdate(order, status.value)}
+                                                                            disabled={order.order_status === status.value}
+                                                                        >
+                                                                            <status.icon className="h-4 w-4 mr-2" />
+                                                                            {status.label}
+                                                                        </DropdownMenuItem>
+                                                                    ))}
+                                                                </DropdownMenuContent>
+                                                            </DropdownMenu>
+                                                        ) : (
+                                                            /* Status tidak bisa diubah jika belum paid */
+                                                            <Badge className={`${statusConfig.color} border opacity-70`} title="Pembayaran belum dilakukan">
+                                                                <StatusIcon className="h-3 w-3 mr-1" />
+                                                                {statusConfig.label}
+                                                            </Badge>
+                                                        )}
                                                     </TableCell>
                                                     <TableCell>
                                                         <DropdownMenu>
@@ -390,14 +396,7 @@ export default function Index({ items, filters }: PageProps<{ items: Pagination<
                                                                     <Pencil className="mr-2 h-4 w-4" />
                                                                     Kelola Pesanan
                                                                 </DropdownMenuItem>
-                                                                <DropdownMenuSeparator />
-                                                                <DropdownMenuItem
-                                                                    className="text-red-600"
-                                                                    onClick={() => handleDelete(order)}
-                                                                >
-                                                                    <Trash2 className="mr-2 h-4 w-4" />
-                                                                    Hapus
-                                                                </DropdownMenuItem>
+                                                                {/* Tombol hapus dihapus - pesanan tidak dapat dihapus */}
                                                             </DropdownMenuContent>
                                                         </DropdownMenu>
                                                     </TableCell>

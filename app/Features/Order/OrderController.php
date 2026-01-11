@@ -411,6 +411,27 @@ class OrderController extends Controller
             'admin_notes' => 'nullable|string',
         ]);
 
+        // === VALIDASI BARU: Admin tidak bisa mengubah status pesanan jika belum dibayar ===
+        if ($request->has('order_status') && $request->order_status !== $order->order_status) {
+            // Cek apakah pembayaran sudah dilakukan
+            if ($order->payment_status !== 'paid') {
+                $errorMessage = 'Tidak dapat mengubah status pesanan karena pembayaran belum dilakukan.';
+                if ($request->expectsJson()) {
+                    return response()->json(['error' => $errorMessage], 422);
+                }
+                return redirect()->back()->with('error', $errorMessage);
+            }
+
+            // Admin tidak boleh mengubah status ke cancelled (hanya customer yang bisa cancel)
+            if ($request->order_status === 'cancelled') {
+                $errorMessage = 'Admin tidak dapat membatalkan pesanan. Pembatalan hanya dapat dilakukan oleh customer sebelum melakukan pembayaran.';
+                if ($request->expectsJson()) {
+                    return response()->json(['error' => $errorMessage], 422);
+                }
+                return redirect()->back()->with('error', $errorMessage);
+            }
+        }
+
         $order->update($request->only([
             'order_status',
             'payment_status',
@@ -429,11 +450,13 @@ class OrderController extends Controller
 
     /**
      * Remove the specified resource from storage for Admin.
+     * NOTE: Pesanan tidak dapat dihapus untuk menjaga integritas data.
      */
     public function destroy(Order $order)
     {
-        $order->delete();
-        return redirect()->route('orders.index')->with('message', 'Order deleted successfully.');
+        // Pesanan tidak dapat dihapus karena sudah dipesan oleh pelanggan
+        return redirect()->route('orders.index')
+            ->with('error', 'Pesanan tidak dapat dihapus karena sudah dipesan oleh pelanggan. Anda hanya dapat membatalkan pesanan.');
     }
 
     public function myOrders(Request $request)
@@ -478,5 +501,33 @@ class OrderController extends Controller
         }
 
         return response()->json(['success' => true]);
+    }
+
+    /**
+     * Cancel an order (customer can only cancel unpaid orders)
+     */
+    public function cancelOrder(Order $order)
+    {
+        // Pastikan hanya pemilik pesanan yang bisa membatalkan
+        if ($order->user_id !== auth()->id()) {
+            return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk membatalkan pesanan ini.');
+        }
+
+        // Hanya bisa membatalkan jika status pembayaran unpaid
+        if ($order->payment_status !== 'unpaid') {
+            return redirect()->back()->with('error', 'Pesanan yang sudah dibayar tidak dapat dibatalkan. Silakan hubungi customer service.');
+        }
+
+        // Hanya bisa membatalkan jika status pesanan bukan cancelled atau completed
+        if (in_array($order->order_status, ['cancelled', 'completed'])) {
+            return redirect()->back()->with('error', 'Pesanan ini sudah tidak dapat dibatalkan.');
+        }
+
+        // Update status pesanan menjadi cancelled
+        $order->update([
+            'order_status' => 'cancelled',
+        ]);
+
+        return redirect()->route('orders.my')->with('message', 'Pesanan berhasil dibatalkan.');
     }
 }

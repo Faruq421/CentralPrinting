@@ -4,14 +4,18 @@ namespace App\Http\Controllers;
 
 use App\Features\Order\Order;
 use App\Features\Order\OrderItem;
+use App\Features\Product\Product;
+use App\Features\Product\Category;
+use App\Features\Review\Review;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         // Periode waktu
         $now = Carbon::now();
@@ -73,43 +77,97 @@ class DashboardController extends Controller
             ? round((($activeCustomersThisMonth - $activeCustomersLastMonth) / $activeCustomersLastMonth) * 100, 1)
             : ($activeCustomersThisMonth > 0 ? 100 : 0);
 
-        // ===== PESANAN TERBARU =====
-        $recentOrders = Order::with('user')
-            ->latest()
-            ->take(5)
+        // ===== PRODUK TERLARIS =====
+        $topProducts = OrderItem::select('product_id_produk', DB::raw('SUM(quantity) as total_sold'))
+            ->whereHas('order', function ($q) {
+                $q->where('payment_status', 'paid');
+            })
+            ->groupBy('product_id_produk')
+            ->orderByDesc('total_sold')
+            ->limit(5)
+            ->with('product:id_produk,nama_produk')
             ->get()
-            ->map(function ($order) {
+            ->map(function ($item, $index) {
                 return [
-                    'id' => 'ORD-' . str_pad($order->id, 3, '0', STR_PAD_LEFT),
-                    'customer' => $order->user->name ?? 'Guest',
-                    'status' => $this->translateStatus($order->order_status),
-                    'statusKey' => $order->order_status,
-                    'total' => $order->total_price,
-                    'date' => $order->created_at->diffForHumans(),
+                    'name' => $item->product->nama_produk ?? 'Produk Dihapus',
+                    'sales' => (int) $item->total_sold,
+                    'id' => 'PRD-' . str_pad($item->product_id_produk, 3, '0', STR_PAD_LEFT),
                 ];
             });
 
-        // Total pesanan bulan ini untuk deskripsi
-        $totalOrdersThisMonth = Order::where('created_at', '>=', $startOfMonth)->count();
+        // ===== AKTIVITAS TERKINI =====
+        $recentActivity = collect();
+        
+        // Pesanan terbaru
+        $recentOrders = Order::with('user')
+            ->latest()
+            ->take(3)
+            ->get()
+            ->map(function ($order) {
+                return [
+                    'user' => $order->user->name ?? 'Guest',
+                    'action' => $order->order_status === 'cancelled' ? 'membatalkan pesanan' : 'membuat pesanan baru',
+                    'target' => '#ORD-' . str_pad($order->id, 4, '0', STR_PAD_LEFT),
+                    'time' => $order->created_at->diffForHumans(),
+                ];
+            });
+        
+        // Ulasan terbaru
+        $recentReviews = Review::with('user')
+            ->latest()
+            ->take(2)
+            ->get()
+            ->map(function ($review) {
+                return [
+                    'user' => $review->user->name ?? 'Anonim',
+                    'action' => 'memberikan ulasan bintang ' . $review->rating,
+                    'target' => '',
+                    'time' => $review->created_at->diffForHumans(),
+                ];
+            });
+        
+        $recentActivity = $recentOrders->merge($recentReviews)
+            ->sortByDesc(function ($item) {
+                return Carbon::parse($item['time']);
+            })
+            ->take(5)
+            ->values();
 
-        // ===== DATA CHART PENJUALAN (6 bulan terakhir) =====
-        $chartData = collect();
-        for ($i = 5; $i >= 0; $i--) {
-            $monthStart = $now->copy()->subMonths($i)->startOfMonth();
-            $monthEnd = $now->copy()->subMonths($i)->endOfMonth();
-            
-            $monthlyRevenue = Order::where('payment_status', 'paid')
-                ->whereBetween('created_at', [$monthStart, $monthEnd])
-                ->sum('total_price');
-            
-            $monthlyOrders = Order::whereBetween('created_at', [$monthStart, $monthEnd])->count();
-            
-            $chartData->push([
-                'name' => $monthStart->translatedFormat('M'), // Jan, Feb, Mar, etc.
-                'pendapatan' => (int) $monthlyRevenue,
-                'pesanan' => $monthlyOrders,
-            ]);
-        }
+        // ===== PENJUALAN PER KATEGORI =====
+        $categorySales = OrderItem::select('products.category_id', DB::raw('SUM(order_items.quantity) as total_sold'))
+            ->join('products', 'order_items.product_id_produk', '=', 'products.id_produk')
+            ->whereHas('order', function ($q) {
+                $q->where('payment_status', 'paid');
+            })
+            ->groupBy('products.category_id')
+            ->with('product.category')
+            ->get()
+            ->map(function ($item) {
+                $category = Category::find($item->category_id);
+                return [
+                    'name' => $category->name ?? 'Lainnya',
+                    'value' => (int) $item->total_sold,
+                ];
+            });
+
+        // ===== DATA TRANSAKSI TERBARU =====
+        $recentTransactions = Order::with('user')
+            ->latest()
+            ->take(6)
+            ->get()
+            ->map(function ($order) {
+                return [
+                    'id' => 'TRX-' . str_pad($order->id, 4, '0', STR_PAD_LEFT),
+                    'date' => $order->created_at->format('d M Y'),
+                    'customer' => $order->user->name ?? 'Guest',
+                    'amount' => $order->total_price,
+                    'status' => $this->translatePaymentStatus($order->payment_status),
+                ];
+            });
+
+        // ===== DATA CHART PENJUALAN =====
+        $timeRange = $request->input('timeRange', '6m');
+        $chartData = $this->getChartData($timeRange);
 
         return Inertia::render('dashboard', [
             'stats' => [
@@ -122,20 +180,100 @@ class DashboardController extends Controller
                 'activeCustomers' => $activeCustomersThisMonth,
                 'activeCustomersChange' => $activeCustomersChange,
             ],
-            'recentOrders' => $recentOrders,
-            'totalOrdersThisMonth' => $totalOrdersThisMonth,
+            'topProducts' => $topProducts,
+            'recentActivity' => $recentActivity,
+            'categorySales' => $categorySales->count() > 0 ? $categorySales : [
+                ['name' => 'Belum ada data', 'value' => 0]
+            ],
+            'recentTransactions' => $recentTransactions,
             'chartData' => $chartData,
         ]);
     }
 
-    private function translateStatus(string $status): string
+    private function getChartData(string $timeRange): array
+    {
+        $now = Carbon::now();
+        $chartData = [];
+
+        switch ($timeRange) {
+            case '1m':
+                // Data per minggu untuk 1 bulan terakhir
+                for ($i = 3; $i >= 0; $i--) {
+                    $weekStart = $now->copy()->subWeeks($i)->startOfWeek();
+                    $weekEnd = $now->copy()->subWeeks($i)->endOfWeek();
+                    
+                    $revenue = Order::where('payment_status', 'paid')
+                        ->whereBetween('created_at', [$weekStart, $weekEnd])
+                        ->sum('total_price');
+                    
+                    $orders = Order::whereBetween('created_at', [$weekStart, $weekEnd])->count();
+                    
+                    $chartData[] = [
+                        'name' => 'Minggu ' . (4 - $i),
+                        'pendapatan' => (int) $revenue,
+                        'pesanan' => $orders,
+                    ];
+                }
+                break;
+
+            case '3m':
+            case '6m':
+                $months = $timeRange === '3m' ? 2 : 5;
+                for ($i = $months; $i >= 0; $i--) {
+                    $monthStart = $now->copy()->subMonths($i)->startOfMonth();
+                    $monthEnd = $now->copy()->subMonths($i)->endOfMonth();
+                    
+                    $revenue = Order::where('payment_status', 'paid')
+                        ->whereBetween('created_at', [$monthStart, $monthEnd])
+                        ->sum('total_price');
+                    
+                    $orders = Order::whereBetween('created_at', [$monthStart, $monthEnd])->count();
+                    
+                    $chartData[] = [
+                        'name' => $monthStart->translatedFormat('M'),
+                        'pendapatan' => (int) $revenue,
+                        'pesanan' => $orders,
+                    ];
+                }
+                break;
+
+            default:
+                // Default: data per bulan untuk tahun yang dipilih atau 1 tahun terakhir
+                $year = is_numeric($timeRange) ? (int) $timeRange : $now->year;
+                
+                for ($month = 1; $month <= 12; $month++) {
+                    $monthStart = Carbon::create($year, $month, 1)->startOfMonth();
+                    $monthEnd = Carbon::create($year, $month, 1)->endOfMonth();
+                    
+                    // Skip bulan yang belum terjadi
+                    if ($monthStart->isFuture()) {
+                        continue;
+                    }
+                    
+                    $revenue = Order::where('payment_status', 'paid')
+                        ->whereBetween('created_at', [$monthStart, $monthEnd])
+                        ->sum('total_price');
+                    
+                    $orders = Order::whereBetween('created_at', [$monthStart, $monthEnd])->count();
+                    
+                    $chartData[] = [
+                        'name' => $monthStart->translatedFormat('M'),
+                        'pendapatan' => (int) $revenue,
+                        'pesanan' => $orders,
+                    ];
+                }
+                break;
+        }
+
+        return $chartData;
+    }
+
+    private function translatePaymentStatus(string $status): string
     {
         return match ($status) {
-            'pending' => 'Pending',
-            'processing' => 'Proses',
-            'shipped' => 'Dikirim',
-            'completed' => 'Selesai',
-            'cancelled' => 'Batal',
+            'paid' => 'Lunas',
+            'unpaid' => 'Pending',
+            'expired' => 'Kadaluarsa',
             default => ucfirst($status),
         };
     }

@@ -22,22 +22,22 @@ export const overviewNavItems: NavItem[] = [
 
 export const commerceNavItems: NavItem[] = [
     {
-        title: 'Orders',
+        title: 'Pesanan',
         href: route('orders.index', undefined, false),
         icon: ShoppingBag,
     },
     {
-        title: 'Products',
+        title: 'Produk',
         href: route('products.index', undefined, false),
         icon: Package,
     },
     {
-        title: 'Customers',
+        title: 'Pelanggan',
         href: route('customers.index', undefined, false),
         icon: Users,
     },
     {
-        title: 'Reviews',
+        title: 'Ulasan',
         href: route('reviews.index', undefined, false),
         icon: Star,
     },

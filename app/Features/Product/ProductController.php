@@ -158,6 +158,18 @@ class ProductController extends Controller
 
     public function destroy(Product $product)
     {
+        // Cek apakah produk sudah pernah dipesan
+        $hasOrders = \App\Features\Order\OrderItem::where('product_id_produk', $product->id_produk)->exists();
+        
+        if ($hasOrders) {
+            // Produk sudah dipesan, tidak bisa dihapus - nonaktifkan saja
+            $product->update(['is_active' => false]);
+            
+            return redirect()->route('products.index')
+                ->with('warning', 'Produk tidak dapat dihapus karena sudah pernah dipesan. Produk telah dinonaktifkan.');
+        }
+        
+        // Produk belum pernah dipesan, hapus permanen
         DB::transaction(function () use ($product) {
             if ($product->gambar) {
                 Storage::disk('public')->delete($product->gambar);
@@ -171,6 +183,20 @@ class ProductController extends Controller
         });
 
         return redirect()->route('products.index')->with('message', 'Produk berhasil dihapus.');
+    }
+
+    /**
+     * Toggle product active status (activate/deactivate)
+     */
+    public function toggleStatus(Product $product)
+    {
+        $product->update(['is_active' => !$product->is_active]);
+        
+        $message = $product->is_active 
+            ? 'Produk berhasil diaktifkan.' 
+            : 'Produk berhasil dinonaktifkan.';
+            
+        return redirect()->route('products.index')->with('message', $message);
     }
 
     private function validateProduct(Request $request, $productId = null)

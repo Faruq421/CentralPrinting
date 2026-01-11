@@ -31,6 +31,10 @@ Route::get('/portfolio', [\App\Features\Portfolio\PortfolioController::class, 'i
 // Rute khusus Admin
 Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
+    
+    // Report download routes
+    Route::get('/reports/download/pdf', [\App\Http\Controllers\ReportController::class, 'downloadPdf'])->name('reports.pdf');
+    Route::get('/reports/download/excel', [\App\Http\Controllers\ReportController::class, 'downloadExcel'])->name('reports.excel');
 });
 
 

@@ -26,6 +26,10 @@ Route::middleware(['auth'])->group(function () {
     // Route untuk update status pembayaran setelah sukses dari Midtrans
     Route::post('/orders/{order}/mark-paid', [OrderController::class, 'markAsPaid'])
         ->name('orders.markPaid');
+    
+    // Route untuk customer membatalkan pesanan (hanya jika unpaid)
+    Route::post('/orders/{order}/cancel', [OrderController::class, 'cancelOrder'])
+        ->name('orders.cancel');
 });
 
 // Rute untuk Admin (CRUD orders - index, create, edit, update, destroy)

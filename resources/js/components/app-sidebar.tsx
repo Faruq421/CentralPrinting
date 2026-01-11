@@ -11,12 +11,12 @@ import { overviewNavItems, commerceNavItems, operationalNavItems } from '@/lib/n
 
 const footerNavItems: NavItem[] = [
     {
-        title: 'Repository',
+        title: 'Repositori',
         href: 'https://github.com/laravel/react-starter-kit',
         icon: Folder,
     },
     {
-        title: 'Documentation',
+        title: 'Dokumentasi',
         href: 'https://laravel.com/docs/starter-kits#react',
         icon: BookOpen,
     },
@@ -38,9 +38,9 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                <NavMain items={overviewNavItems} label="Overview" />
-                <NavMain items={commerceNavItems} label="Commerce" />
-                <NavMain items={operationalNavItems} label="Operational" />
+                <NavMain items={overviewNavItems} label="Ringkasan" />
+                <NavMain items={commerceNavItems} label="Bisnis" />
+                <NavMain items={operationalNavItems} label="Operasional" />
             </SidebarContent>
 
             <SidebarFooter>

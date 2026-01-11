@@ -6,10 +6,10 @@ import { route } from 'ziggy-js';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { MoreHorizontal, Pencil, PlusCircle, Search, ArrowUpDown, Trash2 } from 'lucide-react';
+import { MoreHorizontal, Pencil, PlusCircle, Search, ArrowUpDown, Trash2, Power, PowerOff } from 'lucide-react';
 import debounce from 'lodash.debounce';
 
 // --- Tipe Data & Helper Functions ---
@@ -28,6 +28,7 @@ interface Product {
     gambar: string;
     category: Category | null;
     status: boolean;
+    is_active: boolean;
 }
 
 const formatCurrency = (amount: number): string => {
@@ -75,14 +76,13 @@ function ProductTable({ items, onSort }: ProductTableProps) {
                             </Button>
                         </TableHead>
                         <TableHead className='text-center'>Status</TableHead>
-                        {/* DIUBAH: Menggunakan text-center untuk memposisikan header Aksi di tengah */}
                         <TableHead className="text-center">Aksi</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
                     {items && items.length > 0 ? (
                         items.map((item) => (
-                            <TableRow key={item.id_produk}>
+                            <TableRow key={item.id_produk} className={!item.is_active ? 'opacity-60 bg-muted/30' : ''}>
                                 <TableCell>
                                     <img
                                         src={`/storage/${item.gambar}`}
@@ -95,16 +95,24 @@ function ProductTable({ items, onSort }: ProductTableProps) {
                                         }}
                                     />
                                 </TableCell>
-                                <TableCell className="font-medium">{item.nama_produk}</TableCell>
+                                <TableCell className="font-medium">
+                                    {item.nama_produk}
+                                    {!item.is_active && (
+                                        <Badge variant="outline" className="ml-2 text-xs">Nonaktif</Badge>
+                                    )}
+                                </TableCell>
                                 <TableCell>{item.category?.name || 'N/A'}</TableCell>
                                 <TableCell>{formatCurrency(item.harga)}</TableCell>
                                 <TableCell className='text-center'>{item.stok}</TableCell>
                                 <TableCell className='text-center'>
-                                    <Badge variant={item.status ? 'default' : 'destructive'}>
-                                        {item.status ? 'Published' : 'Draft'}
-                                    </Badge>
+                                    {item.is_active ? (
+                                        <Badge variant={item.status ? 'default' : 'secondary'}>
+                                            {item.status ? 'Published' : 'Draft'}
+                                        </Badge>
+                                    ) : (
+                                        <Badge variant="destructive">Nonaktif</Badge>
+                                    )}
                                 </TableCell>
-                                {/* DIUBAH: Menggunakan text-center untuk memposisikan konten Aksi di tengah */}
                                 <TableCell className="text-center">
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
@@ -121,6 +129,32 @@ function ProductTable({ items, onSort }: ProductTableProps) {
                                                     <span>Edit</span>
                                                 </Link>
                                             </DropdownMenuItem>
+
+                                            <DropdownMenuSeparator />
+
+                                            {/* Toggle Active/Inactive */}
+                                            <DropdownMenuItem asChild>
+                                                <Link
+                                                    href={route('products.toggleStatus', item.id_produk)}
+                                                    method="patch"
+                                                    as="button"
+                                                    className={item.is_active ? 'text-orange-600' : 'text-green-600'}
+                                                >
+                                                    {item.is_active ? (
+                                                        <>
+                                                            <PowerOff className="mr-2 h-4 w-4" />
+                                                            <span>Nonaktifkan</span>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Power className="mr-2 h-4 w-4" />
+                                                            <span>Aktifkan</span>
+                                                        </>
+                                                    )}
+                                                </Link>
+                                            </DropdownMenuItem>
+
+                                            {/* Delete Button */}
                                             <DropdownMenuItem className="text-red-600" asChild>
                                                 <Link href={route('products.destroy', item.id_produk)} method="delete" as="button">
                                                     <Trash2 className="mr-2 h-4 w-4" />
