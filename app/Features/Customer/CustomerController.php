@@ -14,7 +14,7 @@ class CustomerController extends Controller
         $model = new Customer;
         $columns = array_diff($model->getConnection()->getSchemaBuilder()->getColumnListing($model->getTable()), $model->getHidden());
 
-        $query = Customer::query();
+        $query = Customer::with('user');
 
         // Logika untuk Pencarian (Search) di semua kolom
         if ($request->filled('search')) {
@@ -22,6 +22,10 @@ class CustomerController extends Controller
                 foreach ($columns as $column) {
                     $q->orWhere($column, 'like', '%' . $request->search . '%');
                 }
+                // Also search by user email
+                $q->orWhereHas('user', function ($userQuery) use ($request) {
+                    $userQuery->where('email', 'like', '%' . $request->search . '%');
+                });
             });
         }
 

@@ -10,7 +10,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { MoreHorizontal, Pencil, PlusCircle, Search, ArrowUpDown, Trash2 } from 'lucide-react';
+import { MoreHorizontal, Pencil, PlusCircle, Search, ArrowUpDown, Trash2, Eye, Users } from 'lucide-react';
 import debounce from 'lodash.debounce';
 
 interface Customer {
@@ -22,6 +22,11 @@ interface Customer {
     city: string;
     province: string;
     // SYNC_ITEM_TYPE_END
+    user?: {
+        id: number;
+        name: string;
+        email: string;
+    };
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -79,69 +84,38 @@ export default function Index({ auth, items, filters }: PageProps<{ items: Pagin
                                     onChange={(e) => setSearch(e.target.value)}
                                 />
                             </div>
-                            <Button asChild>
-                                <Link href={route('customers.create')}>
-                                    <PlusCircle className="mr-2 h-4 w-4" /> Tambah
-                                </Link>
-                            </Button>
                         </div>
                         <div className="rounded-md border">
                             <Table>
                                 <TableHeader>
                                     <TableRow>
                                         {/* SYNC_TABLE_HEADERS_START */}
-<TableHead className="w-[40px]"><Checkbox /></TableHead>
-<TableHead>User Id</TableHead>
-<TableHead>Phone Number</TableHead>
-<TableHead>Address</TableHead>
-<TableHead>City</TableHead>
-<TableHead>Province</TableHead>
-<TableHead className="text-right">Action</TableHead>
-{/* SYNC_TABLE_HEADERS_END */}
+                                        <TableHead className="w-[50px]">#</TableHead>
+                                        <TableHead>Nama</TableHead>
+                                        <TableHead>Email</TableHead>
+                                        <TableHead>No. Telepon</TableHead>
+                                        <TableHead>Kota</TableHead>
+                                        <TableHead>Provinsi</TableHead>
+                                        {/* SYNC_TABLE_HEADERS_END */}
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {items.data.map((item: Customer) => (
                                         <TableRow key={item.id}>
                                             {/* SYNC_TABLE_ROWS_START */}
-<TableCell><Checkbox /></TableCell>
-<TableCell className="font-medium">{ item.user_id }</TableCell>
-<TableCell className="font-medium">{ item.phone_number }</TableCell>
-<TableCell>{ item.address ? (item.address.substring(0, 50) + (item.address.length > 50 ? '...' : '')) : '' }</TableCell>
-<TableCell className="font-medium">{ item.city }</TableCell>
-<TableCell className="font-medium">{ item.province }</TableCell>
-<TableCell className="text-right">
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild>
-                                                        <Button aria-haspopup="true" size="icon" variant="ghost">
-                                                            <MoreHorizontal className="h-4 w-4" />
-                                                            <span className="sr-only">Toggle menu</span>
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end">
-                                                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                        <DropdownMenuItem asChild>
-                                                            <Link href={route('customers.edit', item.id)}>
-                                                                <Pencil className="mr-2 h-4 w-4"/>
-                                                                <span>Edit</span>
-                                                            </Link>
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem className="text-red-600" asChild>
-                                                            <Link href={route('customers.destroy', item.id)} method="delete" as="button">
-                                                                <Trash2 className="mr-2 h-4 w-4"/>
-                                                                <span>Delete</span>
-                                                            </Link>
-                                                        </DropdownMenuItem>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
-                                            </TableCell>
-{/* SYNC_TABLE_ROWS_END */}
+                                            <TableCell className="text-muted-foreground">{item.id}</TableCell>
+                                            <TableCell className="font-medium">{item.user?.name || '-'}</TableCell>
+                                            <TableCell>{item.user?.email || '-'}</TableCell>
+                                            <TableCell>{item.phone_number || '-'}</TableCell>
+                                            <TableCell>{item.city || '-'}</TableCell>
+                                            <TableCell>{item.province || '-'}</TableCell>
+                                            {/* SYNC_TABLE_ROWS_END */}
                                         </TableRow>
                                     ))}
                                 </TableBody>
                             </Table>
                         </div>
-                         <div className="flex items-center justify-between space-x-2 py-4">
+                        <div className="flex items-center justify-between space-x-2 py-4">
                             <div className="text-sm text-muted-foreground">
                                 Menampilkan {items.from}-{items.to} dari {items.total} data
                             </div>
