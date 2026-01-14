@@ -20,7 +20,15 @@ class OrderController extends Controller
 
         // Logic for Customers
         if ($user->role !== 'admin') {
-            $query = Order::where('user_id', $user->id)
+            // Get customer record for the logged-in user
+            $customer = $user->customer;
+            if (!$customer) {
+                return Inertia::render('Features/Order/Index', [
+                    'orders' => ['data' => []],
+                ]);
+            }
+            
+            $query = Order::where('customer_id', $customer->id)
                 ->with('items.product')
                 ->latest();
 
@@ -59,7 +67,7 @@ class OrderController extends Controller
         }
 
         return Inertia::render('Features/Order/Index', [
-            'items' => $query->with('user', 'items.product')->paginate(10)->withQueryString(),
+            'items' => $query->with('customer.user', 'items.product')->paginate(10)->withQueryString(),
             'filters' => $request->only(['search', 'sort_by', 'sort_dir', 'status', 'payment_status']),
         ]);
     }
@@ -174,10 +182,16 @@ class OrderController extends Controller
 
         $order = null;
         try {
-            DB::transaction(function () use ($validated, $itemsToProcess, $totalPrice, $shippingCost, $shippingMethodName, $productsById, &$order) {
+            // Get customer record
+            $customer = auth()->user()->customer;
+            if (!$customer) {
+                return response()->json(['error' => 'Anda harus melengkapi profil customer terlebih dahulu.'], 422);
+            }
+            
+            DB::transaction(function () use ($validated, $itemsToProcess, $totalPrice, $shippingCost, $shippingMethodName, $productsById, &$order, $customer) {
                 // Create order entry
                 $order = Order::create([
-                    'user_id' => auth()->id(),
+                    'customer_id' => $customer->id,
                     'order_status' => 'pending',
                     'total_price' => $totalPrice,
                     'shipping_address' => $validated['shipping_address'],
@@ -311,11 +325,12 @@ class OrderController extends Controller
     public function show(Order $order)
     {
         // Pastikan pengguna hanya bisa melihat order miliknya, kecuali admin
-        if (auth()->user()->role !== 'admin' && $order->user_id !== auth()->id()) {
+        $customer = auth()->user()->customer;
+        if (auth()->user()->role !== 'admin' && (!$customer || $order->customer_id !== $customer->id)) {
             abort(403);
         }
 
-        $order->load('user', 'items.product');
+        $order->load('customer.user', 'items.product');
 
         // Pre-fetch all attributes and attribute values for efficiency
         $allAttributes = \App\Features\Product\Attribute::all()->keyBy('id');
@@ -461,9 +476,17 @@ class OrderController extends Controller
 
     public function myOrders(Request $request)
     {
-        // 1. Ambil pesanan HANYA untuk pengguna yang sedang login
-        //    Kita juga memuat relasi 'items' untuk menampilkan detail produk
-        $orders = Order::where('user_id', $request->user()->id)
+        // Get customer record for the logged-in user
+        $customer = $request->user()->customer;
+        
+        if (!$customer) {
+            return Inertia::render('Features/Order/MyOrdersPage', [
+                'orders' => ['data' => []],
+            ]);
+        }
+        
+        // 1. Ambil pesanan HANYA untuk customer yang sedang login
+        $orders = Order::where('customer_id', $customer->id)
             ->with(['items.product']) 
             ->withCount('reviews') // Cek apakah ada review
             ->withCount(['reviews as reviews_edited_count' => function ($query) {
@@ -485,7 +508,8 @@ class OrderController extends Controller
     public function markAsPaid(Order $order)
     {
         // Pastikan hanya pemilik pesanan yang bisa memanggil
-        if ($order->user_id !== auth()->id()) {
+        $customer = auth()->user()->customer;
+        if (!$customer || $order->customer_id !== $customer->id) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -509,7 +533,8 @@ class OrderController extends Controller
     public function cancelOrder(Order $order)
     {
         // Pastikan hanya pemilik pesanan yang bisa membatalkan
-        if ($order->user_id !== auth()->id()) {
+        $customer = auth()->user()->customer;
+        if (!$customer || $order->customer_id !== $customer->id) {
             return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk membatalkan pesanan ini.');
         }
 

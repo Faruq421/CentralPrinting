@@ -2,7 +2,7 @@
 
 namespace App\Features\Order;
 
-use App\Models\User;
+use App\Features\Customer\Customer;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -11,7 +11,7 @@ class Order extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id',
+        'customer_id',
         'order_status',
         'total_price',
         'shipping_address',
@@ -35,9 +35,12 @@ class Order extends Model
         'payment_time' => 'datetime',
     ];
 
-    public function user()
+    /**
+     * Get the customer that owns the order.
+     */
+    public function customer()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Customer::class);
     }
 
     public function items()

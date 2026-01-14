@@ -316,13 +316,6 @@ export default function SiteHeader({ auth }: PageProps) {
                                     </DropdownMenuContent>
                                 </DropdownMenu>
                             </nav>
-
-                            {/* Right Side Promo Link */}
-                            <div className="ml-auto flex items-center gap-4 text-sm font-medium text-orange-600">
-                                <Link href="#" className="flex items-center gap-1 hover:text-orange-700">
-                                    <Gift className="h-4 w-4" /> Poin Member
-                                </Link>
-                            </div>
                         </div>
                     </div>
                 </div>

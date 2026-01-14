@@ -18,8 +18,14 @@ class ReviewController extends Controller
      */
     public function createForOrder(Order $order)
     {
-        // Ensure user owns this order
-        if ($order->user_id !== auth()->id()) {
+        // Get customer record
+        $customer = auth()->user()->customer;
+        if (!$customer) {
+            abort(403, 'Anda tidak memiliki profil customer.');
+        }
+        
+        // Ensure customer owns this order
+        if ($order->customer_id !== $customer->id) {
             abort(403, 'Anda tidak memiliki izin untuk mereview pesanan ini.');
         }
 
@@ -60,11 +66,8 @@ class ReviewController extends Controller
             ];
         })->unique('id')->values(); // Unique by product ID
 
-        // Check if any review for this order has already been edited by the user
-        // If updating is limited to ONCE per order (meaning if you update ANY product in the order, you use your quota)
-        // Or if it's per product? The request says "hanya dapat melakukan update penialaian sebanyak satu kali saja". 
-        // This implies the ACTION of updating. Since the form submits all, we can check if *any* review has `is_edited` = true.
-        $hasEdited = Review::where('user_id', auth()->id())
+        // Check if any review for this order has already been edited by the customer
+        $hasEdited = Review::where('customer_id', $customer->id)
             ->where('order_id', $order->id)
             ->where('is_edited', true)
             ->exists();
@@ -75,7 +78,7 @@ class ReviewController extends Controller
         }
 
         // Fetch existing reviews for this order
-        $existingReviews = Review::where('user_id', auth()->id())
+        $existingReviews = Review::where('customer_id', $customer->id)
             ->where('order_id', $order->id)
             ->get()
             ->keyBy('product_id')
@@ -111,14 +114,15 @@ class ReviewController extends Controller
 
         $orderId = $validated['order_id'];
 
-        // Verify order belongs to user and is completed
+        // Verify order belongs to customer and is completed
         $order = Order::findOrFail($orderId);
-        if ($order->user_id !== auth()->id()) {
+        $customer = auth()->user()->customer;
+        if (!$customer || $order->customer_id !== $customer->id) {
             abort(403);
         }
 
-        // Check if user has already edited reviews for this order (Global check for order level)
-        $hasEdited = Review::where('user_id', auth()->id())
+        // Check if customer has already edited reviews for this order
+        $hasEdited = Review::where('customer_id', $customer->id)
             ->where('order_id', $orderId)
             ->where('is_edited', true)
             ->exists();
@@ -129,7 +133,7 @@ class ReviewController extends Controller
         }
 
         // Save all reviews in a transaction
-        DB::transaction(function () use ($validated, $orderId) {
+        DB::transaction(function () use ($validated, $orderId, $customer) {
             foreach ($validated['reviews'] as $productId => $reviewData) {
                 // Skip if no rating provided
                 if (empty($reviewData['rating'])) {
@@ -137,7 +141,7 @@ class ReviewController extends Controller
                 }
 
                 // Check if review already exists for this product/order combo
-                $existingReview = Review::where('user_id', auth()->id())
+                $existingReview = Review::where('customer_id', $customer->id)
                     ->where('order_id', $orderId)
                     ->where('product_id', $reviewData['product_id'])
                     ->first();
@@ -152,7 +156,7 @@ class ReviewController extends Controller
                 } else {
                     // Create new review
                     Review::create([
-                        'user_id' => auth()->id(),
+                        'customer_id' => $customer->id,
                         'order_id' => $orderId,
                         'product_id' => $reviewData['product_id'],
                         'rating' => $reviewData['rating'],
@@ -173,7 +177,7 @@ class ReviewController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Review::with(['user', 'product', 'order']);
+        $query = Review::with(['customer.user', 'product', 'order']);
 
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {

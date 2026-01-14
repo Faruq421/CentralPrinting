@@ -4,7 +4,7 @@ namespace App\Features\Review;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\User;
+use App\Features\Customer\Customer;
 use App\Features\Product\Product;
 use App\Features\Order\Order;
 
@@ -16,7 +16,7 @@ class Review extends Model
      * The attributes that are mass assignable.
      */
     protected $fillable = [
-        'user_id',
+        'customer_id',
         'product_id',
         'order_id',
         'rating',
@@ -37,11 +37,11 @@ class Review extends Model
     ];
 
     /**
-     * Get the user that wrote the review.
+     * Get the customer that wrote the review.
      */
-    public function user()
+    public function customer()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Customer::class);
     }
 
     /**
