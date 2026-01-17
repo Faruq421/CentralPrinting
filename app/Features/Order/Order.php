@@ -5,10 +5,17 @@ namespace App\Features\Order;
 use App\Features\Customer\Customer;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Class Order
+ * 
+ * Valid order_status values: pending, confirmed, processing, printing, ready, shipped, delivered, completed, cancelled
+ * Valid payment_status values: unpaid, pending, paid, failed, refunded, expired
+ */
 class Order extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'customer_id',

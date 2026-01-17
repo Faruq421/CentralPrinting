@@ -36,7 +36,7 @@ export type PaymentStatus = 'unpaid' | 'paid' | 'expired';
 
 export interface Order {
     id: number;
-    user_id: number;
+    customer_id: number;
     order_status: OrderStatus;
     total_price: number;
     total_amount?: number; // Alias for backward compatibility
@@ -51,5 +51,12 @@ export interface Order {
     items: OrderItem[];
     created_at: string;
     updated_at: string;
-    user: User;
+    customer?: {
+        id: number;
+        user?: {
+            id: number;
+            name: string;
+            email: string;
+        };
+    };
 }

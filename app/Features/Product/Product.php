@@ -6,12 +6,13 @@ use App\Features\Product\Category;
 use App\Features\Product\AttributeValue; // Saya tambahkan ini untuk kelengkapan
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Storage; // <-- Tambahan dari saya
 use Illuminate\Support\Str; // <-- Tambahkan ini
 
 class Product extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $primaryKey = 'id_produk';
 
@@ -92,6 +93,7 @@ class Product extends Model
     }
 
     protected $casts = [
+        'harga' => 'decimal:2',
         'status' => 'boolean',
         'is_active' => 'boolean',
         'allow_custom_design' => 'boolean',

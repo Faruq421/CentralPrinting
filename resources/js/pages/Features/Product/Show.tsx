@@ -35,7 +35,7 @@ interface AttributeValue {
     attribute_id: number;
     value: string;
     attribute: { id: number; name: string };
-    pivot: { price: number };
+    pivot: { price: number | string };
 }
 
 interface ProductData extends BaseProduct {
@@ -47,7 +47,7 @@ interface ProductData extends BaseProduct {
     allow_custom_design: boolean;
     design_templates: DesignTemplate[];
     enable_design_feature: boolean;
-    harga: number;
+    harga: number | string;
     stok: number;
     reviews: ReviewData[];
     category: { name: string };
@@ -63,10 +63,12 @@ interface ReviewData {
     comment: string;
     photos: string[] | null;
     created_at: string;
-    user: {
-        id: number;
-        name: string;
-        avatar?: string;
+    customer?: {
+        user?: {
+            id: number;
+            name: string;
+            avatar?: string;
+        };
     };
 }
 interface PageProps extends InertiaPageProps {
@@ -175,10 +177,12 @@ export default function ProductShowPage({ product, related_products }: PageProps
 
     const additionalPrice = useMemo(() => Object.values(selectedOptions).reduce((total, valueId) => {
         const selectedValue = product.attribute_values.find(v => v.id === valueId);
-        return total + (selectedValue ? selectedValue.pivot.price : 0);
+        const price = selectedValue ? (typeof selectedValue.pivot.price === 'string' ? parseFloat(selectedValue.pivot.price) : selectedValue.pivot.price) : 0;
+        return total + (isNaN(price) ? 0 : price);
     }, 0), [selectedOptions, product.attribute_values]);
 
-    const totalPrice = useMemo(() => (product.harga + additionalPrice) * quantity, [product.harga, additionalPrice, quantity]);
+    const basePrice = typeof product.harga === 'string' ? parseFloat(product.harga) : product.harga;
+    const totalPrice = useMemo(() => ((isNaN(basePrice) ? 0 : basePrice) + additionalPrice) * quantity, [basePrice, additionalPrice, quantity]);
 
     // --- Logika Opsi Desain ---
     const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -380,9 +384,9 @@ export default function ProductShowPage({ product, related_products }: PageProps
                                                                         >
                                                                             <RadioGroupItem value={value.id.toString()} id={`attr_${value.id}`} className="sr-only" />
                                                                             <span>{value.value}</span>
-                                                                            {value.pivot.price > 0 && (
+                                                                            {(typeof value.pivot.price === 'string' ? parseFloat(value.pivot.price) : value.pivot.price) > 0 && (
                                                                                 <span className={cn("ml-2 text-xs", isSelected ? "text-orange-600 font-semibold" : "text-gray-500 font-normal")}>
-                                                                                    (+{value.pivot.price.toLocaleString('id-ID')})
+                                                                                    (+{(typeof value.pivot.price === 'string' ? parseFloat(value.pivot.price) : value.pivot.price).toLocaleString('id-ID')})
                                                                                 </span>
                                                                             )}
                                                                         </Label>
@@ -655,8 +659,8 @@ export default function ProductShowPage({ product, related_products }: PageProps
                                                         <div key={review.id} className="border-b border-gray-100 pb-8 last:border-0 dark:border-gray-700">
                                                             <div className="flex gap-4">
                                                                 <div className="flex-shrink-0">
-                                                                    {review.user.avatar ? (
-                                                                        <img src={review.user.avatar} alt={review.user.name} className="h-10 w-10 rounded-full object-cover" />
+                                                                    {review.customer?.user?.avatar ? (
+                                                                        <img src={review.customer.user.avatar} alt={review.customer.user.name} className="h-10 w-10 rounded-full object-cover" />
                                                                     ) : (
                                                                         <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500">
                                                                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
@@ -666,7 +670,7 @@ export default function ProductShowPage({ product, related_products }: PageProps
                                                                     )}
                                                                 </div>
                                                                 <div className="flex-1 space-y-2">
-                                                                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{review.user.name}</div>
+                                                                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{review.customer?.user?.name || 'Anonim'}</div>
                                                                     <div className="flex items-center gap-1">
                                                                         {[...Array(5)].map((_, i) => (
                                                                             <Star key={i} className={cn("h-3.5 w-3.5", i < review.rating ? "text-orange-500 fill-orange-500" : "text-gray-200")} />

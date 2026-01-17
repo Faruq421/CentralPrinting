@@ -251,7 +251,7 @@ export default function FormPage({ auth, item, categories, allAttributes, design
                                                                 </div>
                                                                 <div className="relative">
                                                                     <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-sm text-gray-500">Rp</span>
-                                                                    <Input type="number" value={option.price} onChange={(e) => handleOptionPriceChange(attribute.id, option.value, parseInt(e.target.value, 10) || 0)} placeholder="Harga" className="h-8 w-32 pl-8 pr-2 text-right" />
+                                                                    <Input type="number" step="0.01" value={option.price} onChange={(e) => handleOptionPriceChange(attribute.id, option.value, parseFloat(e.target.value) || 0)} placeholder="Harga" className="h-8 w-32 pl-8 pr-2 text-right" />
                                                                 </div>
                                                             </div>
                                                         ))}
@@ -305,7 +305,7 @@ export default function FormPage({ auth, item, categories, allAttributes, design
                                 <CardContent className="space-y-4">
                                     <div className="space-y-2">
                                         <Label htmlFor="harga">Harga</Label>
-                                        <Input id="harga" type="number" value={data.harga} onChange={e => setData('harga', parseInt(e.target.value, 10) || 0)} placeholder="75000" />
+                                        <Input id="harga" type="number" step="0.01" value={data.harga} onChange={e => setData('harga', parseFloat(e.target.value) || 0)} placeholder="75000" />
                                         {errors.harga && <p className="text-sm text-red-500 mt-1">{errors.harga}</p>}
                                     </div>
                                     <div className="space-y-2">

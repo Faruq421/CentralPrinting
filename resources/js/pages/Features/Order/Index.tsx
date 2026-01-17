@@ -294,8 +294,8 @@ export default function Index({ items, filters }: PageProps<{ items: Pagination<
                                                 <TableRow key={order.id}>
                                                     <TableCell className="font-medium">#{order.id}</TableCell>
                                                     <TableCell>
-                                                        <div className="font-medium">{order.user?.name || 'N/A'}</div>
-                                                        <div className="text-sm text-muted-foreground">{order.user?.email || ''}</div>
+                                                        <div className="font-medium">{order.customer?.user?.name || 'N/A'}</div>
+                                                        <div className="text-sm text-muted-foreground">{order.customer?.user?.email || ''}</div>
                                                     </TableCell>
                                                     <TableCell>
                                                         {/* Status Pesanan - Hanya bisa diubah jika sudah paid */}

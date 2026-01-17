@@ -149,7 +149,7 @@
                     <td class="text-center">{{ $index + 1 }}</td>
                     <td>TRX-{{ str_pad($order->id, 4, '0', STR_PAD_LEFT) }}</td>
                     <td>{{ $order->created_at->format('d/m/Y H:i') }}</td>
-                    <td>{{ $order->user->name ?? 'Guest' }}</td>
+                    <td>{{ $order->customer->user->name ?? 'Guest' }}</td>
                     <td class="text-center {{ $order->order_status === 'cancelled' ? 'status-cancelled' : '' }}">
                         {{ ucfirst($order->order_status) }}
                     </td>

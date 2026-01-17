@@ -27,8 +27,11 @@ class PaymentController extends Controller
      */
     public function createSnapToken(Order $order)
     {
-        // Verify the order belongs to the current user
-        if ($order->user_id !== auth()->id()) {
+        // Verify the order belongs to the current user (through customer)
+        $user = auth()->user();
+        $customer = $user->customer;
+        
+        if (!$customer || $order->customer_id !== $customer->id) {
             abort(403, 'Unauthorized access to this order.');
         }
 

@@ -23,7 +23,7 @@ interface Product {
     id_produk: number;
     nama_produk: string;
     deskripsi: string;
-    harga: number;
+    harga: number | string;
     stok: number;
     gambar: string;
     category: Category | null;
@@ -31,13 +31,14 @@ interface Product {
     is_active: boolean;
 }
 
-const formatCurrency = (amount: number): string => {
-    if (typeof amount !== 'number') return 'Rp 0';
+const formatCurrency = (amount: number | string): string => {
+    const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+    if (isNaN(numAmount)) return 'Rp 0';
     return new Intl.NumberFormat('id-ID', {
         style: 'currency',
         currency: 'IDR',
         minimumFractionDigits: 0,
-    }).format(amount);
+    }).format(numAmount);
 };
 
 // --- Konstanta ---

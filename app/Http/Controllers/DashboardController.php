@@ -66,12 +66,12 @@ class DashboardController extends Controller
 
         // 4. Pelanggan Aktif (customer yang punya pesanan bulan ini)
         $activeCustomersThisMonth = Order::where('created_at', '>=', $startOfMonth)
-            ->distinct('user_id')
-            ->count('user_id');
+            ->distinct('customer_id')
+            ->count('customer_id');
         
         $activeCustomersLastMonth = Order::whereBetween('created_at', [$startOfLastMonth, $endOfLastMonth])
-            ->distinct('user_id')
-            ->count('user_id');
+            ->distinct('customer_id')
+            ->count('customer_id');
         
         $activeCustomersChange = $activeCustomersLastMonth > 0
             ? round((($activeCustomersThisMonth - $activeCustomersLastMonth) / $activeCustomersLastMonth) * 100, 1)
@@ -99,13 +99,13 @@ class DashboardController extends Controller
         $recentActivity = collect();
         
         // Pesanan terbaru
-        $recentOrders = Order::with('user')
+        $recentOrders = Order::with('customer.user')
             ->latest()
             ->take(3)
             ->get()
             ->map(function ($order) {
                 return [
-                    'user' => $order->user->name ?? 'Guest',
+                    'user' => $order->customer->user->name ?? 'Guest',
                     'action' => $order->order_status === 'cancelled' ? 'membatalkan pesanan' : 'membuat pesanan baru',
                     'target' => '#ORD-' . str_pad($order->id, 4, '0', STR_PAD_LEFT),
                     'time' => $order->created_at->diffForHumans(),
@@ -113,13 +113,13 @@ class DashboardController extends Controller
             });
         
         // Ulasan terbaru
-        $recentReviews = Review::with('user')
+        $recentReviews = Review::with('customer.user')
             ->latest()
             ->take(2)
             ->get()
             ->map(function ($review) {
                 return [
-                    'user' => $review->user->name ?? 'Anonim',
+                    'user' => $review->customer->user->name ?? 'Anonim',
                     'action' => 'memberikan ulasan bintang ' . $review->rating,
                     'target' => '',
                     'time' => $review->created_at->diffForHumans(),
@@ -151,7 +151,7 @@ class DashboardController extends Controller
             });
 
         // ===== DATA TRANSAKSI TERBARU =====
-        $recentTransactions = Order::with('user')
+        $recentTransactions = Order::with('customer.user')
             ->latest()
             ->take(6)
             ->get()
@@ -159,7 +159,7 @@ class DashboardController extends Controller
                 return [
                     'id' => 'TRX-' . str_pad($order->id, 4, '0', STR_PAD_LEFT),
                     'date' => $order->created_at->format('d M Y'),
-                    'customer' => $order->user->name ?? 'Guest',
+                    'customer' => $order->customer->user->name ?? 'Guest',
                     'amount' => $order->total_price,
                     'status' => $this->translatePaymentStatus($order->payment_status),
                 ];

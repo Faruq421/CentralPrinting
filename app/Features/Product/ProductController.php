@@ -57,7 +57,7 @@ class ProductController extends Controller
             ->get();
 
         return Inertia::render('Features/Product/Show', [
-            'product' => $product->load('category', 'attributeValues.attribute', 'designTemplates', 'reviews.user'),
+            'product' => $product->load('category', 'attributeValues.attribute', 'designTemplates', 'reviews.customer.user'),
             'related_products' => $related_products,
         ]);
     }
@@ -204,7 +204,7 @@ class ProductController extends Controller
         return $request->validate([
             'nama_produk' => 'required|string|max:255',
             'deskripsi' => 'required|string',
-            'harga' => 'required|integer|min:0',
+            'harga' => 'required|numeric|min:0',
             'stok' => 'required|integer|min:0',
             'gambar' => ($productId ? 'nullable' : 'required') . '|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'category_id' => 'required|exists:categories,id',
@@ -217,7 +217,7 @@ class ProductController extends Controller
             'attributes.*.name' => 'required_with:attributes|string|max:255',
             'attributes.*.options' => 'required_with:attributes|array|min:1',
             'attributes.*.options.*.value' => 'required_with:attributes|string|max:255',
-            'attributes.*.options.*.price' => 'required_with:attributes|integer|min:0',
+            'attributes.*.options.*.price' => 'required_with:attributes|numeric|min:0',
         ]);
     }
 

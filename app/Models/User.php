@@ -63,8 +63,21 @@ class User extends Authenticatable
 
     public function customer() {
         return $this->hasOne(Customer::class);
-    }    public function orders()
+    }
+
+    /**
+     * Get orders through customer relationship.
+     * Note: Orders are now linked to customers, not directly to users.
+     */
+    public function orders()
     {
-        return $this->hasMany(\App\Features\Order\Order::class);
+        return $this->hasManyThrough(
+            \App\Features\Order\Order::class,
+            Customer::class,
+            'user_id',      // Foreign key on customers table
+            'customer_id',  // Foreign key on orders table
+            'id',           // Local key on users table
+            'id'            // Local key on customers table
+        );
     }
 }

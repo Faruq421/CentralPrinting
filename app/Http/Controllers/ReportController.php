@@ -22,7 +22,7 @@ class ReportController extends Controller
         $startDate = Carbon::parse($request->start_date)->startOfDay();
         $endDate = Carbon::parse($request->end_date)->endOfDay();
 
-        $orders = Order::with('user', 'items.product')
+        $orders = Order::with('customer.user', 'items.product')
             ->whereBetween('created_at', [$startDate, $endDate])
             ->orderBy('created_at', 'desc')
             ->get();
@@ -62,7 +62,7 @@ class ReportController extends Controller
         $startDate = Carbon::parse($request->start_date)->startOfDay();
         $endDate = Carbon::parse($request->end_date)->endOfDay();
 
-        $orders = Order::with('user')
+        $orders = Order::with('customer.user')
             ->whereBetween('created_at', [$startDate, $endDate])
             ->orderBy('created_at', 'desc')
             ->get();
@@ -96,8 +96,8 @@ class ReportController extends Controller
                 fputcsv($file, [
                     'TRX-' . str_pad($order->id, 4, '0', STR_PAD_LEFT),
                     $order->created_at->format('d/m/Y H:i'),
-                    $order->user->name ?? 'Guest',
-                    $order->user->email ?? '-',
+                    $order->customer->user->name ?? 'Guest',
+                    $order->customer->user->email ?? '-',
                     ucfirst($order->order_status),
                     ucfirst($order->payment_status),
                     $order->total_price,

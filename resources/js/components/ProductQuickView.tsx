@@ -26,7 +26,7 @@ interface ProductData {
     nama_produk: string;
     slug: string;
     deskripsi: string;
-    harga: number;
+    harga: number | string;
     gambar_url: string;
     attribute_values: AttributeValue[];
     allow_custom_design: boolean;
@@ -55,7 +55,7 @@ interface AttributeValue {
     attribute_id: number;
     value: string;
     attribute: { id: number; name: string };
-    pivot: { price: number };
+    pivot: { price: number | string };
 }
 
 interface DesignTemplate {
@@ -264,13 +264,15 @@ export function ProductQuickView({ productSlug, cartItemId, isOpen, onClose }: P
         if (!product) return 0;
         return Object.values(selectedOptions).reduce((total, valueId) => {
             const selectedValue = product.attribute_values.find(v => v.id === valueId);
-            return total + (selectedValue ? selectedValue.pivot.price : 0);
+            const price = selectedValue ? (typeof selectedValue.pivot.price === 'string' ? parseFloat(selectedValue.pivot.price) : selectedValue.pivot.price) : 0;
+            return total + (isNaN(price) ? 0 : price);
         }, 0);
     }, [selectedOptions, product]);
 
     const totalPrice = useMemo(() => {
         if (!product) return 0;
-        return (product.harga + additionalPrice) * quantity;
+        const basePrice = typeof product.harga === 'string' ? parseFloat(product.harga) : product.harga;
+        return ((isNaN(basePrice) ? 0 : basePrice) + additionalPrice) * quantity;
     }, [product, additionalPrice, quantity]);
 
 
@@ -484,9 +486,9 @@ export function ProductQuickView({ productSlug, cartItemId, isOpen, onClose }: P
                                                 >
                                                     <RadioGroupItem value={value.id.toString()} id={`quick_attr_${value.id}`} className="sr-only" />
                                                     {value.value}
-                                                    {value.pivot.price > 0 && (
+                                                    {(typeof value.pivot.price === 'string' ? parseFloat(value.pivot.price) : value.pivot.price) > 0 && (
                                                         <span className="ml-1 text-xs opacity-70">
-                                                            (+{value.pivot.price.toLocaleString('id-ID')})
+                                                            (+{(typeof value.pivot.price === 'string' ? parseFloat(value.pivot.price) : value.pivot.price).toLocaleString('id-ID')})
                                                         </span>
                                                     )}
                                                 </Label>

@@ -307,15 +307,15 @@ export default function Show({ order }: PageProps<{ order: Order }>) {
                                         <User className="h-4 w-4 text-slate-500" />
                                     </div>
                                     <div>
-                                        <div className="font-medium">{order.user?.name || 'Customer'}</div>
-                                        <div className="text-muted-foreground text-xs">Customer ID: #{order.user?.id || order.user_id}</div>
+                                        <div className="font-medium">{order.customer?.user?.name || 'Customer'}</div>
+                                        <div className="text-muted-foreground text-xs">Customer ID: #{order.customer?.id || order.customer_id}</div>
                                     </div>
                                 </div>
                                 <Separator />
                                 <div className="space-y-2">
                                     <div className="flex items-center gap-2 text-muted-foreground">
                                         <Mail className="h-3.5 w-3.5" />
-                                        <span>{order.user?.email || 'N/A'}</span>
+                                        <span>{order.customer?.user?.email || 'N/A'}</span>
                                     </div>
                                     <div className="flex items-center gap-2 text-muted-foreground">
                                         <Phone className="h-3.5 w-3.5" />
