@@ -8,6 +8,12 @@ use Illuminate\Database\Eloquent\Model;
 class AttributeValue extends Model
 {
     use HasFactory;
+
+    /**
+     * Disable timestamps for this model.
+     */
+    public $timestamps = false;
+
     protected $fillable = ['attribute_id', 'value'];
 
     public function attribute()

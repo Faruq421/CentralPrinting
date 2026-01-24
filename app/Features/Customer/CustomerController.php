@@ -33,7 +33,7 @@ class CustomerController extends Controller
         if ($request->filled('sort_by') && $request->filled('sort_dir')) {
             $query->orderBy($request->sort_by, $request->sort_dir);
         } else {
-            $query->latest(); // Urutan default jika tidak ada sort
+            $query->orderBy('id', 'desc'); // Urutan default by ID (timestamps removed)
         }
 
         return Inertia::render('Features/Customer/Index', [

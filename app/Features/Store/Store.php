@@ -7,6 +7,11 @@ use Illuminate\Support\Str;
 
 class Store extends Model
 {
+    /**
+     * Disable timestamps for this model.
+     */
+    public $timestamps = false;
+
     protected $fillable = [
         'name',
         'slug',

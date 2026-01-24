@@ -10,6 +10,11 @@ class DesignTemplate extends Model
     use HasFactory;
 
     /**
+     * Disable timestamps for this model.
+     */
+    public $timestamps = false;
+
+    /**
      * The attributes that are mass assignable.
      *
      * @var array<int, string>

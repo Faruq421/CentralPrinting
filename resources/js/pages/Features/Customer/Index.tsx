@@ -38,7 +38,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 export default function Index({ auth, items, filters }: PageProps<{ items: Pagination<Customer>, filters: any }>) {
     const [search, setSearch] = useState(filters.search || '');
-    const [sortBy, setSortBy] = useState(filters.sort_by || 'created_at');
+    const [sortBy, setSortBy] = useState(filters.sort_by || 'id');
     const [sortDir, setSortDir] = useState(filters.sort_dir || 'desc');
 
     const debouncedSearch = useCallback(
