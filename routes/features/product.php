@@ -1,5 +1,4 @@
 <?php
-
 use App\Features\Product\ProductController;
 use Illuminate\Support\Facades\Route;
 

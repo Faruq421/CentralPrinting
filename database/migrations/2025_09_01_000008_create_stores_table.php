@@ -8,6 +8,7 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
+     * Tabel stores untuk lokasi toko
      */
     public function up(): void
     {
@@ -23,9 +24,10 @@ return new class extends Migration
             $table->string('hours_weekday')->nullable()->comment('Mon-Fri hours');
             $table->string('hours_saturday')->nullable();
             $table->string('hours_sunday')->nullable();
+            $table->json('operating_hours')->nullable();  // Format jam operasional fleksibel
             $table->string('google_maps_url')->nullable();
             $table->boolean('is_active')->default(true);
-            $table->timestamps();
+            // Tanpa timestamps sesuai model
         });
     }
 
