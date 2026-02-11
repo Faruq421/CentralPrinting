@@ -218,7 +218,7 @@ export default function Index({ auth, items, filters }: PageProps<{ items: Pagin
             <div className="p-4 sm:p-6 lg:p-8">
                 <Card>
                     <CardHeader>
-                        <CardTitle>Produk</CardTitle>
+                        <CardTitle>Kelola Produk</CardTitle>
                         <CardDescription>Kelola semua produk Anda di sini.</CardDescription>
                     </CardHeader>
                     <CardContent>
