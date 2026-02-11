@@ -6,7 +6,26 @@ import SiteLayout from '@/layouts/SiteLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Package, CheckCircle, Truck, Hourglass, XCircle, Loader2 } from 'lucide-react';
+import { Package, CheckCircle, Truck, Hourglass, XCircle, Loader2, CreditCard, Wallet } from 'lucide-react';
+import axios from 'axios';
+import { toast } from 'sonner';
+
+// Midtrans Snap type declaration
+declare global {
+    interface Window {
+        snap: {
+            pay: (
+                token: string,
+                options: {
+                    onSuccess?: (result: unknown) => void;
+                    onPending?: (result: unknown) => void;
+                    onError?: (result: unknown) => void;
+                    onClose?: () => void;
+                }
+            ) => void;
+        };
+    }
+}
 import {
     AlertDialog,
     AlertDialogAction,
@@ -42,6 +61,8 @@ interface Order {
     items: OrderItem[];
     reviews_count?: number;
     reviews_edited_count?: number;
+    snap_token?: string | null;
+    payment_method?: string;
 }
 
 // Tipe untuk data paginasi
@@ -79,10 +100,38 @@ const formatCurrency = (value: number | string) => {
     }).format(numberValue);
 };
 
+// Helper untuk label status pembayaran dalam Bahasa Indonesia
+const getPaymentStatusLabel = (status: string) => {
+    switch (status?.toLowerCase()) {
+        case 'paid':
+            return 'Sudah Dibayar';
+        case 'unpaid':
+            return 'Belum Dibayar';
+        case 'expired':
+            return 'Kedaluwarsa';
+        default:
+            return status || 'Tidak Diketahui';
+    }
+};
+
+const getPaymentStatusStyle = (status: string) => {
+    switch (status?.toLowerCase()) {
+        case 'paid':
+            return 'text-green-600 border-green-200 bg-green-50';
+        case 'unpaid':
+            return 'text-red-600 border-red-200 bg-red-50';
+        case 'expired':
+            return 'text-orange-600 border-orange-200 bg-orange-50';
+        default:
+            return 'text-gray-600';
+    }
+};
+
 export default function MyOrdersPage() {
     // Ambil data 'orders' yang dikirim dari controller
     const { orders } = usePage<{ orders: PaginatedOrders }>().props;
     const [cancellingOrderId, setCancellingOrderId] = useState<number | null>(null);
+    const [payingOrderId, setPayingOrderId] = useState<number | null>(null);
 
     // Handle cancel order
     const handleCancelOrder = (orderId: number) => {
@@ -91,6 +140,57 @@ export default function MyOrdersPage() {
             preserveScroll: true,
             onFinish: () => setCancellingOrderId(null),
         });
+    };
+
+    // Handle pay order — buka Midtrans Snap popup
+    const handlePayOrder = async (order: Order) => {
+        setPayingOrderId(order.id);
+
+        try {
+            // Minta snap token baru dari backend
+            const response = await axios.post(route('payment.createToken', { order: order.id }));
+            const { snap_token } = response.data;
+
+            if (snap_token && window.snap) {
+                window.snap.pay(snap_token, {
+                    onSuccess: async (result: unknown) => {
+                        console.log('Payment success:', result);
+
+                        // Update status pembayaran di backend
+                        try {
+                            await axios.post(route('orders.markPaid', order.id));
+                        } catch (err) {
+                            console.error('Gagal update status pembayaran:', err);
+                        }
+
+                        toast.success('Pembayaran berhasil!');
+                        router.visit(window.location.href, { preserveScroll: true });
+                    },
+                    onPending: (result: unknown) => {
+                        console.log('Payment pending:', result);
+                        toast.info('Menunggu pembayaran. Silakan selesaikan pembayaran Anda.');
+                        setPayingOrderId(null);
+                    },
+                    onError: (result: unknown) => {
+                        console.error('Payment error:', result);
+                        toast.error('Pembayaran gagal. Silakan coba lagi.');
+                        setPayingOrderId(null);
+                    },
+                    onClose: () => {
+                        console.log('Payment popup closed');
+                        toast.info('Anda menutup popup pembayaran. Pesanan Anda tetap tersimpan.');
+                        setPayingOrderId(null);
+                    },
+                });
+            } else {
+                toast.error('Midtrans Snap tidak tersedia. Silakan refresh halaman.');
+                setPayingOrderId(null);
+            }
+        } catch (error) {
+            console.error('Failed to create payment token:', error);
+            toast.error('Gagal memulai pembayaran. Silakan coba lagi.');
+            setPayingOrderId(null);
+        }
     };
 
     // Check if order can be cancelled
@@ -119,13 +219,8 @@ export default function MyOrdersPage() {
                                         </p>
                                     </div>
                                     <div className="text-right flex gap-2">
-                                        <Badge variant="outline" className={
-                                            order.payment_status === 'paid' ? 'text-green-600 border-green-200 bg-green-50' :
-                                                order.payment_status === 'unpaid' ? 'text-red-600 border-red-200 bg-red-50' :
-                                                    'text-gray-600'
-                                        }>
-                                            {order.payment_status === 'paid' ? 'Sudah Dibayar' :
-                                                order.payment_status === 'unpaid' ? 'Belum Dibayar' : order.payment_status}
+                                        <Badge variant="outline" className={getPaymentStatusStyle(order.payment_status)}>
+                                            {getPaymentStatusLabel(order.payment_status)}
                                         </Badge>
                                         {getStatusBadge(order.order_status)}
                                     </div>
@@ -158,6 +253,28 @@ export default function MyOrdersPage() {
                                     )}
                                 </CardContent>
                                 <CardFooter className="bg-gray-50 border-t p-4 flex justify-end space-x-2">
+                                    {/* Tombol Bayar Sekarang - hanya tampil jika unpaid dan belum dibatalkan */}
+                                    {canCancelOrder(order) && (
+                                        <Button
+                                            size="sm"
+                                            className="bg-[#FF6500] hover:bg-[#e05a00] text-white"
+                                            disabled={payingOrderId === order.id}
+                                            onClick={() => handlePayOrder(order)}
+                                        >
+                                            {payingOrderId === order.id ? (
+                                                <>
+                                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                    Memproses...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Wallet className="mr-2 h-4 w-4" />
+                                                    Bayar Sekarang
+                                                </>
+                                            )}
+                                        </Button>
+                                    )}
+
                                     {/* Tombol Batalkan Pesanan - hanya tampil jika unpaid */}
                                     {canCancelOrder(order) && (
                                         <AlertDialog>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, usePage, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import SiteLayout from '@/layouts/SiteLayout';
 import { PageProps, BreadcrumbItem } from '@/types';
@@ -15,23 +15,42 @@ import {
 import {
     Package, Truck, CreditCard, User, MapPin,
     Download, FileIcon, ChevronLeft, Calendar,
-    Mail, Phone, Info, Eye, Clock, CheckCircle, XCircle
+    Mail, Phone, Info, Eye, Clock, CheckCircle, XCircle, Wallet, Loader2
 } from 'lucide-react';
+import axios from 'axios';
+import { toast } from 'sonner';
 import { Order, OrderStatus, PaymentStatus, OrderItem } from './types';
+
+// Midtrans Snap type declaration
+declare global {
+    interface Window {
+        snap: {
+            pay: (
+                token: string,
+                options: {
+                    onSuccess?: (result: unknown) => void;
+                    onPending?: (result: unknown) => void;
+                    onError?: (result: unknown) => void;
+                    onClose?: () => void;
+                }
+            ) => void;
+        };
+    }
+}
 
 // Status configurations for display
 const ORDER_STATUS_CONFIG: Record<OrderStatus, { label: string; color: string; icon: React.ElementType }> = {
-    pending: { label: 'Pending', color: 'bg-yellow-100 text-yellow-800', icon: Clock },
-    processing: { label: 'Processing', color: 'bg-blue-100 text-blue-800', icon: Package },
-    shipped: { label: 'Shipped', color: 'bg-purple-100 text-purple-800', icon: Truck },
-    completed: { label: 'Completed', color: 'bg-green-100 text-green-800', icon: CheckCircle },
-    cancelled: { label: 'Cancelled', color: 'bg-red-100 text-red-800', icon: XCircle },
+    pending: { label: 'Menunggu', color: 'bg-yellow-100 text-yellow-800', icon: Clock },
+    processing: { label: 'Diproses', color: 'bg-blue-100 text-blue-800', icon: Package },
+    shipped: { label: 'Dikirim', color: 'bg-purple-100 text-purple-800', icon: Truck },
+    completed: { label: 'Selesai', color: 'bg-green-100 text-green-800', icon: CheckCircle },
+    cancelled: { label: 'Dibatalkan', color: 'bg-red-100 text-red-800', icon: XCircle },
 };
 
 const PAYMENT_STATUS_CONFIG: Record<PaymentStatus, { label: string; color: string }> = {
-    unpaid: { label: 'Unpaid', color: 'bg-red-100 text-red-800' },
-    paid: { label: 'Paid', color: 'bg-green-100 text-green-800' },
-    expired: { label: 'Expired', color: 'bg-gray-100 text-gray-800' },
+    unpaid: { label: 'Belum Dibayar', color: 'bg-red-100 text-red-800' },
+    paid: { label: 'Sudah Dibayar', color: 'bg-green-100 text-green-800' },
+    expired: { label: 'Kedaluwarsa', color: 'bg-gray-100 text-gray-800' },
 };
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -43,6 +62,58 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function Show({ order }: PageProps<{ order: Order }>) {
     const [selectedItem, setSelectedItem] = useState<OrderItem | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
+    const [isPayingOrder, setIsPayingOrder] = useState(false);
+
+    // Check if order can be paid
+    const canPayOrder = order.payment_status === 'unpaid' &&
+        !['cancelled', 'completed'].includes(order.order_status?.toLowerCase());
+
+    // Handle pay order — buka Midtrans Snap popup
+    const handlePayOrder = async () => {
+        setIsPayingOrder(true);
+
+        try {
+            const response = await axios.post(route('payment.createToken', { order: order.id }));
+            const { snap_token } = response.data;
+
+            if (snap_token && window.snap) {
+                window.snap.pay(snap_token, {
+                    onSuccess: async (result: unknown) => {
+                        console.log('Payment success:', result);
+                        try {
+                            await axios.post(route('orders.markPaid', order.id));
+                        } catch (err) {
+                            console.error('Gagal update status pembayaran:', err);
+                        }
+                        toast.success('Pembayaran berhasil!');
+                        router.visit(window.location.href, { preserveScroll: true });
+                    },
+                    onPending: (result: unknown) => {
+                        console.log('Payment pending:', result);
+                        toast.info('Menunggu pembayaran. Silakan selesaikan pembayaran Anda.');
+                        setIsPayingOrder(false);
+                    },
+                    onError: (result: unknown) => {
+                        console.error('Payment error:', result);
+                        toast.error('Pembayaran gagal. Silakan coba lagi.');
+                        setIsPayingOrder(false);
+                    },
+                    onClose: () => {
+                        console.log('Payment popup closed');
+                        toast.info('Anda menutup popup pembayaran. Pesanan Anda tetap tersimpan.');
+                        setIsPayingOrder(false);
+                    },
+                });
+            } else {
+                toast.error('Midtrans Snap tidak tersedia. Silakan refresh halaman.');
+                setIsPayingOrder(false);
+            }
+        } catch (error) {
+            console.error('Failed to create payment token:', error);
+            toast.error('Gagal memulai pembayaran. Silakan coba lagi.');
+            setIsPayingOrder(false);
+        }
+    };
 
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount);
@@ -121,7 +192,7 @@ export default function Show({ order }: PageProps<{ order: Order }>) {
                             </p>
                         </div>
                     </div>
-                    <div className="flex gap-2 sm:ml-0">
+                    <div className="flex gap-2 sm:ml-0 flex-wrap">
                         <Badge variant="outline" className={`capitalize ${orderStatusConfig.color}`}>
                             <StatusIcon className="h-3 w-3 mr-1" />
                             Status: {orderStatusConfig.label}
@@ -130,6 +201,27 @@ export default function Show({ order }: PageProps<{ order: Order }>) {
                             <CreditCard className="h-3 w-3 mr-1" />
                             Pembayaran: {paymentStatusConfig.label}
                         </Badge>
+                        {/* Tombol Bayar Sekarang - hanya tampil jika unpaid */}
+                        {canPayOrder && (
+                            <Button
+                                size="sm"
+                                className="bg-[#FF6500] hover:bg-[#e05a00] text-white"
+                                disabled={isPayingOrder}
+                                onClick={handlePayOrder}
+                            >
+                                {isPayingOrder ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Memproses...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Wallet className="mr-2 h-4 w-4" />
+                                        Bayar Sekarang
+                                    </>
+                                )}
+                            </Button>
+                        )}
                     </div>
                 </div>
 
