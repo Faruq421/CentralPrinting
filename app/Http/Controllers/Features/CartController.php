@@ -210,6 +210,15 @@ class CartController extends Controller
 
         // Case 1: New custom design upload
         if ($designType === 'upload' && $request->hasFile('design.value')) {
+            // Validate file size and type (max 2MB)
+            $request->validate([
+                'design.value' => 'image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
+            ], [
+                'design.value.max' => 'Ukuran file desain maksimal 2MB.',
+                'design.value.image' => 'File desain harus berupa gambar.',
+                'design.value.mimes' => 'Format file desain yang diizinkan: jpeg, png, jpg, gif, svg, webp.',
+            ]);
+
             $file = $request->file('design.value');
             Log::info('processDesignData: Uploading file', [
                 'original_name' => $file->getClientOriginalName(),

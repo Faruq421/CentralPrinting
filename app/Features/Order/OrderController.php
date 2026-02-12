@@ -447,6 +447,15 @@ class OrderController extends Controller
             }
         }
 
+        // === VALIDASI: Admin tidak bisa mengubah status pembayaran dari 'paid' ke 'unpaid' atau 'expired' ===
+        if ($request->has('payment_status') && $order->payment_status === 'paid' && $request->payment_status !== 'paid') {
+            $errorMessage = 'Tidak dapat mengubah status pembayaran. Pesanan yang sudah dibayar tidak dapat dikembalikan ke status belum dibayar atau kedaluwarsa.';
+            if ($request->expectsJson()) {
+                return response()->json(['error' => $errorMessage], 422);
+            }
+            return redirect()->back()->with('error', $errorMessage);
+        }
+
         $order->update($request->only([
             'order_status',
             'payment_status',

@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Camera, Save, Lock, Mail, MapPin, User, Phone, Loader2, CheckCircle } from 'lucide-react';
+import { Camera, Save, Lock, Mail, MapPin, User, Phone, Loader2, CheckCircle, Eye, EyeOff } from 'lucide-react';
 
 // Define Customer type
 interface Customer {
@@ -35,6 +35,9 @@ function PasswordForm() {
         password: '',
         password_confirmation: '',
     });
+    const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const handlePasswordSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -63,12 +66,23 @@ function PasswordForm() {
 
                     <div className="space-y-2">
                         <Label htmlFor="current_password">Kata Sandi Saat Ini</Label>
-                        <Input
-                            id="current_password"
-                            type="password"
-                            value={data.current_password}
-                            onChange={(e) => setData('current_password', e.target.value)}
-                        />
+                        <div className="relative">
+                            <Input
+                                id="current_password"
+                                type={showCurrentPassword ? 'text' : 'password'}
+                                className="pr-10"
+                                value={data.current_password}
+                                onChange={(e) => setData('current_password', e.target.value)}
+                            />
+                            <button
+                                type="button"
+                                tabIndex={-1}
+                                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                                className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 transition-colors"
+                            >
+                                {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </button>
+                        </div>
                         {errors.current_password && (
                             <p className="text-sm text-red-600">{errors.current_password}</p>
                         )}
@@ -77,24 +91,46 @@ function PasswordForm() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="password">Kata Sandi Baru</Label>
-                            <Input
-                                id="password"
-                                type="password"
-                                value={data.password}
-                                onChange={(e) => setData('password', e.target.value)}
-                            />
+                            <div className="relative">
+                                <Input
+                                    id="password"
+                                    type={showNewPassword ? 'text' : 'password'}
+                                    className="pr-10"
+                                    value={data.password}
+                                    onChange={(e) => setData('password', e.target.value)}
+                                />
+                                <button
+                                    type="button"
+                                    tabIndex={-1}
+                                    onClick={() => setShowNewPassword(!showNewPassword)}
+                                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 transition-colors"
+                                >
+                                    {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                </button>
+                            </div>
                             {errors.password && (
                                 <p className="text-sm text-red-600">{errors.password}</p>
                             )}
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="password_confirmation">Konfirmasi Kata Sandi</Label>
-                            <Input
-                                id="password_confirmation"
-                                type="password"
-                                value={data.password_confirmation}
-                                onChange={(e) => setData('password_confirmation', e.target.value)}
-                            />
+                            <div className="relative">
+                                <Input
+                                    id="password_confirmation"
+                                    type={showConfirmPassword ? 'text' : 'password'}
+                                    className="pr-10"
+                                    value={data.password_confirmation}
+                                    onChange={(e) => setData('password_confirmation', e.target.value)}
+                                />
+                                <button
+                                    type="button"
+                                    tabIndex={-1}
+                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 transition-colors"
+                                >
+                                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </CardContent>

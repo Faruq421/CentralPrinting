@@ -10,6 +10,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ArrowLeft, Save, Upload, MapPin, Phone, Mail, Clock, Globe, Plus, Trash2 } from 'lucide-react';
+import { toast, Toaster } from 'sonner';
+
+const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
 
 interface OperatingHour {
     days: string[];
@@ -84,6 +87,11 @@ export default function FormPage({ store }: Props) {
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
+            if (file.size > MAX_FILE_SIZE) {
+                toast.error('Ukuran gambar terlalu besar. Maksimal 2MB.');
+                e.target.value = '';
+                return;
+            }
             setData('image', file);
             const reader = new FileReader();
             reader.onloadend = () => {
@@ -151,6 +159,7 @@ export default function FormPage({ store }: Props) {
 
     return (
         <AppLayout>
+            <Toaster richColors position="top-center" />
             <Head title={isEditing ? `Edit: ${store.name}` : 'Tambah Toko Baru'} />
 
             <div className="p-6 max-w-4xl mx-auto">

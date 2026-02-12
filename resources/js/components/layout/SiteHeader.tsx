@@ -289,19 +289,19 @@ export default function SiteHeader({ auth }: PageProps) {
                                         <DropdownMenuLabel>Hubungi Kami</DropdownMenuLabel>
                                         <DropdownMenuSeparator />
                                         <DropdownMenuItem asChild>
-                                            <a href="https://wa.me/628123456789" target="_blank" rel="noopener noreferrer" className="cursor-pointer flex items-center">
+                                            <a href="https://wa.me/https://api.whatsapp.com/send/?phone=%2B6285271569045&text&type=phone_number&app_absent=0" target="_blank" rel="noopener noreferrer" className="cursor-pointer flex items-center">
                                                 <MessageCircle className="mr-2 h-4 w-4 text-green-600" />
                                                 WhatsApp
                                             </a>
                                         </DropdownMenuItem>
                                         <DropdownMenuItem asChild>
-                                            <a href="https://instagram.com/centralprinting.id" target="_blank" rel="noopener noreferrer" className="cursor-pointer flex items-center">
+                                            <a href="https://www.instagram.com/centralprinting_duri?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" target="_blank" rel="noopener noreferrer" className="cursor-pointer flex items-center">
                                                 <Instagram className="mr-2 h-4 w-4 text-pink-600" />
                                                 Instagram
                                             </a>
                                         </DropdownMenuItem>
                                         <DropdownMenuItem asChild>
-                                            <a href="https://facebook.com/centralprinting" target="_blank" rel="noopener noreferrer" className="cursor-pointer flex items-center">
+                                            <a href="https://www.facebook.com/people/Central-Printing-Duri/pfbid02obuDVuPbPXt8Pa2ZWPbPvAUyhMWhzyRSd4oYkCHMsY7jAydZ7vfJVwZ37H4VZP9zl/" target="_blank" rel="noopener noreferrer" className="cursor-pointer flex items-center">
                                                 <Facebook className="mr-2 h-4 w-4 text-blue-600" />
                                                 Facebook
                                             </a>

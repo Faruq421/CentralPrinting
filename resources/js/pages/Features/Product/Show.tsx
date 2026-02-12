@@ -185,7 +185,18 @@ export default function ProductShowPage({ product, related_products }: PageProps
     const totalPrice = useMemo(() => ((isNaN(basePrice) ? 0 : basePrice) + additionalPrice) * quantity, [basePrice, additionalPrice, quantity]);
 
     // --- Logika Opsi Desain ---
-    const onDrop = useCallback((acceptedFiles: File[]) => {
+    const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+
+    const onDrop = useCallback((acceptedFiles: File[], rejectedFiles: any[]) => {
+        if (rejectedFiles.length > 0) {
+            const error = rejectedFiles[0]?.errors?.[0];
+            if (error?.code === 'file-too-large') {
+                toast.error('Ukuran file terlalu besar. Maksimal 2MB.');
+            } else {
+                toast.error('File tidak valid. Gunakan format JPG, PNG, atau gambar lainnya.');
+            }
+            return;
+        }
         const file = acceptedFiles[0];
         if (file) {
             setUploadedFile(file);
@@ -197,7 +208,7 @@ export default function ProductShowPage({ product, related_products }: PageProps
 
     useEffect(() => () => { if (previewUrl) URL.revokeObjectURL(previewUrl); }, [previewUrl]);
 
-    const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop, accept: { 'image/*': [] }, multiple: false });
+    const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop, accept: { 'image/*': [] }, multiple: false, maxSize: MAX_FILE_SIZE });
 
     const removeUploadedFile = () => {
         setUploadedFile(null);
@@ -446,7 +457,7 @@ export default function ProductShowPage({ product, related_products }: PageProps
                                                                     </div>
                                                                     <div className="mt-3 text-center">
                                                                         <p className='font-medium text-gray-900 dark:text-gray-100 group-hover:text-orange-600'>Klik atau letakkan file di sini</p>
-                                                                        <p className="text-xs text-gray-500 mt-1">Mendukung JPG, PNG, PDF</p>
+                                                                        <p className="text-xs text-gray-500 mt-1">Mendukung JPG, PNG, PDF (Maks. 2MB)</p>
                                                                     </div>
                                                                 </div>
                                                             )}

@@ -27,7 +27,14 @@ class PasswordController extends Controller
     {
         $validated = $request->validate([
             'current_password' => ['required', 'current_password'],
-            'password' => ['required', Password::defaults(), 'confirmed'],
+            'password' => ['required', 'confirmed', Password::min(8)
+                ->letters()
+                ->mixedCase()
+                ->numbers()
+                ->symbols()],
+        ], [
+            'password.min' => 'Password minimal 8 karakter.',
+            'password' => 'Password harus mengandung huruf besar, huruf kecil, angka, dan simbol.',
         ]);
 
         $request->user()->update([

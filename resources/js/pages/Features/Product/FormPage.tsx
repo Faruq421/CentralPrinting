@@ -14,7 +14,9 @@ import { cn } from '@/lib/utils';
 import { UploadCloud, X, PlusCircle, Loader2 } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import axios from 'axios';
-import { toast } from 'sonner';
+import { toast, Toaster } from 'sonner';
+
+const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
 
 // --- Tipe Data ---
 interface Category { id: number; name: string; }
@@ -119,7 +121,18 @@ export default function FormPage({ auth, item, categories, allAttributes, design
     // --- State & Logic untuk Template Desain ---
     const [isUploading, setIsUploading] = useState(false);
 
-    const handleDrop = useCallback((acceptedFiles: File[]) => {
+    const handleDrop = useCallback((acceptedFiles: File[], rejectedFiles: any[]) => {
+        if (rejectedFiles.length > 0) {
+            rejectedFiles.forEach(({ errors }) => {
+                const error = errors?.[0];
+                if (error?.code === 'file-too-large') {
+                    toast.error('Ukuran file terlalu besar. Maksimal 2MB per file.');
+                } else {
+                    toast.error('File tidak valid. Gunakan format gambar (JPG, PNG, GIF, SVG).');
+                }
+            });
+            return;
+        }
         setIsUploading(true);
         const uploadPromises = acceptedFiles.map(file => {
             const formData = new FormData();
@@ -146,6 +159,7 @@ export default function FormPage({ auth, item, categories, allAttributes, design
         onDrop: handleDrop,
         accept: { 'image/*': ['.jpeg', '.png', '.jpg', '.gif', '.svg'] },
         disabled: isUploading,
+        maxSize: MAX_FILE_SIZE,
     });
 
     const unlinkTemplate = (templateId: number) => {
@@ -296,7 +310,15 @@ export default function FormPage({ auth, item, categories, allAttributes, design
                                             )}
                                         </div>
                                     </label>
-                                    <Input id="gambar" type="file" onChange={e => setData('gambar', e.target.files ? e.target.files[0] : null)} className="hidden" />
+                                    <Input id="gambar" type="file" onChange={e => {
+                                        const file = e.target.files?.[0];
+                                        if (file && file.size > MAX_FILE_SIZE) {
+                                            toast.error('Ukuran gambar terlalu besar. Maksimal 2MB.');
+                                            e.target.value = '';
+                                            return;
+                                        }
+                                        setData('gambar', file || null);
+                                    }} className="hidden" />
                                     {errors.gambar && <p className="text-sm text-red-500 mt-2">{errors.gambar}</p>}
                                 </CardContent>
                             </Card>

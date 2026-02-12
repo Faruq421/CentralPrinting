@@ -15,7 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
     MoreHorizontal, Eye, Pencil, Search, Package, Truck, CheckCircle, XCircle, Clock, CreditCard, Ban,
-    Loader2
+    Loader2, Lock
 } from 'lucide-react';
 import debounce from 'lodash.debounce';
 import { Order, OrderStatus, PaymentStatus } from './types';
@@ -47,17 +47,17 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 // Order status configurations
 const ORDER_STATUSES: { value: OrderStatus; label: string; icon: React.ElementType; color: string }[] = [
-    { value: 'pending', label: 'Pending', icon: Clock, color: 'bg-yellow-100 text-yellow-800 border-yellow-300' },
-    { value: 'processing', label: 'Processing', icon: Package, color: 'bg-blue-100 text-blue-800 border-blue-300' },
-    { value: 'shipped', label: 'Shipped', icon: Truck, color: 'bg-purple-100 text-purple-800 border-purple-300' },
-    { value: 'completed', label: 'Completed', icon: CheckCircle, color: 'bg-green-100 text-green-800 border-green-300' },
-    { value: 'cancelled', label: 'Cancelled', icon: XCircle, color: 'bg-red-100 text-red-800 border-red-300' },
+    { value: 'pending', label: 'Menunggu', icon: Clock, color: 'bg-yellow-100 text-yellow-800 border-yellow-300' },
+    { value: 'processing', label: 'Diproses', icon: Package, color: 'bg-blue-100 text-blue-800 border-blue-300' },
+    { value: 'shipped', label: 'Dikirim', icon: Truck, color: 'bg-purple-100 text-purple-800 border-purple-300' },
+    { value: 'completed', label: 'Selesai', icon: CheckCircle, color: 'bg-green-100 text-green-800 border-green-300' },
+    { value: 'cancelled', label: 'Dibatalkan', icon: XCircle, color: 'bg-red-100 text-red-800 border-red-300' },
 ];
 
 const PAYMENT_STATUSES: { value: PaymentStatus; label: string; color: string }[] = [
-    { value: 'unpaid', label: 'Unpaid', color: 'bg-red-100 text-red-800 border-red-300' },
-    { value: 'paid', label: 'Paid', color: 'bg-green-100 text-green-800 border-green-300' },
-    { value: 'expired', label: 'Expired', color: 'bg-gray-100 text-gray-800 border-gray-300' },
+    { value: 'unpaid', label: 'Belum Dibayar', color: 'bg-red-100 text-red-800 border-red-300' },
+    { value: 'paid', label: 'Sudah Dibayar', color: 'bg-green-100 text-green-800 border-green-300' },
+    { value: 'expired', label: 'Kedaluwarsa', color: 'bg-gray-100 text-gray-800 border-gray-300' },
 ];
 
 export default function Index({ items, filters }: PageProps<{ items: Pagination<Order>; filters: Filters }>) {
@@ -334,30 +334,38 @@ export default function Index({ items, filters }: PageProps<{ items: Pagination<
                                                         )}
                                                     </TableCell>
                                                     <TableCell>
-                                                        <DropdownMenu>
-                                                            <DropdownMenuTrigger asChild>
-                                                                <Button variant="ghost" className="h-8 p-0">
-                                                                    <Badge className={`${paymentConfig.color} border cursor-pointer transition-all duration-200`}>
-                                                                        <CreditCard className="h-3 w-3 mr-1" />
-                                                                        {paymentConfig.label}
-                                                                    </Badge>
-                                                                </Button>
-                                                            </DropdownMenuTrigger>
-                                                            <DropdownMenuContent align="start">
-                                                                <DropdownMenuLabel>Ubah Pembayaran</DropdownMenuLabel>
-                                                                <DropdownMenuSeparator />
-                                                                {PAYMENT_STATUSES.map((status) => (
-                                                                    <DropdownMenuItem
-                                                                        key={status.value}
-                                                                        onClick={() => handleQuickPaymentUpdate(order, status.value)}
-                                                                        disabled={order.payment_status === status.value}
-                                                                    >
-                                                                        <CreditCard className="h-4 w-4 mr-2" />
-                                                                        {status.label}
-                                                                    </DropdownMenuItem>
-                                                                ))}
-                                                            </DropdownMenuContent>
-                                                        </DropdownMenu>
+                                                        {order.payment_status === 'paid' ? (
+                                                            /* Sudah dibayar - tidak bisa diubah */
+                                                            <Badge className={`${paymentConfig.color} border`} title="Status pembayaran sudah final">
+                                                                <Lock className="h-3 w-3 mr-1" />
+                                                                {paymentConfig.label}
+                                                            </Badge>
+                                                        ) : (
+                                                            <DropdownMenu>
+                                                                <DropdownMenuTrigger asChild>
+                                                                    <Button variant="ghost" className="h-8 p-0">
+                                                                        <Badge className={`${paymentConfig.color} border cursor-pointer transition-all duration-200`}>
+                                                                            <CreditCard className="h-3 w-3 mr-1" />
+                                                                            {paymentConfig.label}
+                                                                        </Badge>
+                                                                    </Button>
+                                                                </DropdownMenuTrigger>
+                                                                <DropdownMenuContent align="start">
+                                                                    <DropdownMenuLabel>Ubah Pembayaran</DropdownMenuLabel>
+                                                                    <DropdownMenuSeparator />
+                                                                    {PAYMENT_STATUSES.map((status) => (
+                                                                        <DropdownMenuItem
+                                                                            key={status.value}
+                                                                            onClick={() => handleQuickPaymentUpdate(order, status.value)}
+                                                                            disabled={order.payment_status === status.value}
+                                                                        >
+                                                                            <CreditCard className="h-4 w-4 mr-2" />
+                                                                            {status.label}
+                                                                        </DropdownMenuItem>
+                                                                    ))}
+                                                                </DropdownMenuContent>
+                                                            </DropdownMenu>
+                                                        )}
                                                     </TableCell>
                                                     <TableCell className="font-medium">
                                                         {formatCurrency(order.total_price)}
@@ -475,21 +483,28 @@ export default function Index({ items, filters }: PageProps<{ items: Pagination<
 
                             <div className="space-y-2">
                                 <Label htmlFor="payment_status">Status Pembayaran</Label>
-                                <Select
-                                    value={data.payment_status}
-                                    onValueChange={(v) => setData('payment_status', v as PaymentStatus)}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Pilih status pembayaran" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {PAYMENT_STATUSES.map((status) => (
-                                            <SelectItem key={status.value} value={status.value}>
-                                                {status.label}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                {selectedOrder?.payment_status === 'paid' ? (
+                                    <div className="flex items-center gap-2 p-2 bg-green-50 border border-green-200 rounded-md text-green-700 text-sm">
+                                        <Lock className="h-4 w-4" />
+                                        <span>Sudah Dibayar — status tidak dapat diubah</span>
+                                    </div>
+                                ) : (
+                                    <Select
+                                        value={data.payment_status}
+                                        onValueChange={(v) => setData('payment_status', v as PaymentStatus)}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Pilih status pembayaran" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {PAYMENT_STATUSES.map((status) => (
+                                                <SelectItem key={status.value} value={status.value}>
+                                                    {status.label}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                )}
                             </div>
 
                             <div className="space-y-2">
