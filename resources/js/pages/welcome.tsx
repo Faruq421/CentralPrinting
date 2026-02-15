@@ -33,11 +33,30 @@ interface Category {
     products?: Product[]; // Added optional products relationship
 }
 
+interface HeroSlideData {
+    id: number;
+    position: 'main_slider' | 'promo_card';
+    title: string;
+    subtitle: string | null;
+    description: string | null;
+    image: string | null;
+    image_url: string | null;
+    gradient_from: string;
+    gradient_to: string;
+    button_enabled: boolean;
+    button_text: string | null;
+    button_link_type: 'product' | 'category' | 'custom_url' | null;
+    button_link_value: string | null;
+    is_active: boolean;
+}
+
 export default function Welcome() {
-    const { products, featuredProducts, categories } = usePage<{
+    const { products, featuredProducts, categories, heroSlides, promoCards } = usePage<{
         products: Product[],
         featuredProducts: Product[],
-        categories: Category[]
+        categories: Category[],
+        heroSlides: HeroSlideData[],
+        promoCards: HeroSlideData[],
     }>().props;
 
     // Quick View State
@@ -62,7 +81,7 @@ export default function Welcome() {
             >
 
                 {/* 1. HERO SECTION */}
-                <HeroSection />
+                <HeroSection heroSlides={heroSlides || []} promoCards={promoCards || []} />
 
                 {/* 2. USP SECTION */}
                 <USPSection />

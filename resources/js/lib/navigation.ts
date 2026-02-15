@@ -9,7 +9,8 @@ import {
     Star,
     MapPin,
     Settings,
-    FileText
+    FileText,
+    ImageIcon
 } from "lucide-react";
 
 export const overviewNavItems: NavItem[] = [
@@ -49,5 +50,9 @@ export const operationalNavItems: NavItem[] = [
         href: route('stores.index', undefined, false),
         icon: MapPin,
     },
-    // Future: Reports, Settings etc.
+    {
+        title: 'Hero Section',
+        href: route('hero-slides.index', undefined, false),
+        icon: ImageIcon,
+    },
 ];
