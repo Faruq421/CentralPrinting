@@ -216,13 +216,13 @@ export default function ShopPage() {
         <SiteLayout>
             <Head title="Belanja Sekarang" />
 
-            <div className="container mx-auto px-4 md:px-6 lg:px-8 pb-8 min-h-screen">
+            <div className="container mx-auto px-3 md:px-6 lg:px-8 pb-8 min-h-screen overflow-x-hidden">
                 {/* Header Section */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 py-4 border-b">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-4 mb-4 md:mb-8 py-3 md:py-4 border-b">
                     <div>
                         <p className="text-sm text-gray-500 mb-1">Produk & Jasa</p>
                         <div className="flex items-center gap-2">
-                            <span className="font-semibold text-gray-900">{displayedProducts.length} Produk Ditemukan</span>
+                            <span className="font-semibold text-gray-900 text-sm md:text-base">{displayedProducts.length} Produk Ditemukan</span>
                             {localFilters.search && (
                                 <Badge variant="secondary" className="ml-2">
                                     Pencarian: "{localFilters.search}"
@@ -237,11 +237,11 @@ export default function ShopPage() {
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-3 w-full md:w-auto">
+                    <div className="flex items-center gap-2 w-full md:w-auto">
                         {/* Mobile Filter Sheet */}
                         <Sheet>
                             <SheetTrigger asChild>
-                                <Button variant="outline" className="lg:hidden w-full md:w-auto">
+                                <Button variant="outline" size="sm" className="lg:hidden flex-1 md:flex-none md:w-auto h-9 text-sm">
                                     <Filter className="h-4 w-4 mr-2" />
                                     Filter
                                 </Button>
@@ -301,7 +301,7 @@ export default function ShopPage() {
 
                         {/* Sort Dropdown */}
                         <Select value={localFilters.sort} onValueChange={handleSortChange}>
-                            <SelectTrigger className="w-full md:w-[180px]">
+                            <SelectTrigger className="flex-1 md:flex-none md:w-[180px] h-9 text-sm">
                                 <SelectValue placeholder="Urutkan" />
                             </SelectTrigger>
                             <SelectContent>
@@ -388,12 +388,12 @@ export default function ShopPage() {
                     </aside>
 
                     {/* --- PRODUCT GRID --- */}
-                    <main className="flex-1">
+                    <main className="flex-1 min-w-0">
                         <motion.div
                             variants={containerVariants}
                             initial="hidden"
                             animate="visible"
-                            className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6"
+                            className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-3 gap-3 lg:gap-6"
                         >
                             <AnimatePresence mode="popLayout">
                                 {displayedProducts.map((product) => (

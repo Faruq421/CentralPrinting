@@ -89,7 +89,7 @@ const EmptyCart = () => (
     </div>
 );
 
-export function CartSheet() {
+export function CartSheet({ trigger }: { trigger?: React.ReactNode }) {
     const { props } = usePage<PageProps>();
     const cart = (props.cart as CartData | null) || { items: {}, subtotal: 0 };
     const cartItems = Object.values(cart.items || {});
@@ -145,14 +145,16 @@ export function CartSheet() {
         <>
             <Sheet>
                 <SheetTrigger asChild>
-                    <Button variant="outline" size="icon" className="relative rounded-full h-10 w-10">
-                        <ShoppingCart className="h-5 w-5" />
-                        {totalItems > 0 && (
-                            <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-orange-500 text-xs font-bold text-white">
-                                {totalItems}
-                            </span>
-                        )}
-                    </Button>
+                    {trigger || (
+                        <Button variant="outline" size="icon" className="relative rounded-full h-10 w-10">
+                            <ShoppingCart className="h-5 w-5" />
+                            {totalItems > 0 && (
+                                <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-orange-500 text-xs font-bold text-white">
+                                    {totalItems}
+                                </span>
+                            )}
+                        </Button>
+                    )}
                 </SheetTrigger>
                 <SheetContent className="flex w-full flex-col bg-gray-50 dark:bg-gray-950 sm:max-w-lg">
                     <SheetHeader className="px-6 pt-4 pb-2">

@@ -38,26 +38,28 @@ export function ProductCard({ product, className, onQuickView }: ProductCardProp
                             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                         />
                     </div>
-                    <div className="p-4">
-                        <p className="text-sm text-muted-foreground mb-1">{product.category.name}</p>
-                        <h3 className="font-semibold truncate text-foreground group-hover:text-orange-600 transition-colors">
+                    <div className="p-3 lg:p-4">
+                        <p className="text-xs lg:text-sm text-muted-foreground mb-0.5 lg:mb-1">{product.category.name}</p>
+                        <h3 className="font-semibold text-sm lg:text-base truncate text-foreground group-hover:text-orange-600 transition-colors">
                             {product.nama_produk}
                         </h3>
-                        <p className="text-lg font-bold text-primary mt-2">
+                        <p className="text-base lg:text-lg font-bold text-primary mt-1 lg:mt-2">
                             {formatRupiah(product.harga)}
                         </p>
                     </div>
                 </Link>
             </CardContent>
 
+            {/* Desktop: hover-reveal | Mobile: always visible */}
             <CardFooter
-                className="p-4 pt-0 overflow-hidden max-h-0 opacity-0 group-hover:max-h-20 group-hover:opacity-100 transition-all duration-300 ease-in-out"
+                className="p-3 lg:p-4 pt-0 lg:overflow-hidden lg:max-h-0 lg:opacity-0 lg:group-hover:max-h-20 lg:group-hover:opacity-100 transition-all duration-300 ease-in-out"
             >
                 <Button
-                    className="w-full"
+                    className="w-full text-sm lg:text-base"
                     variant="default"
+                    size="sm"
                     onClick={(e) => {
-                        e.preventDefault(); // Prevent Link click if nested (though it's not nested here)
+                        e.preventDefault();
                         if (onQuickView) onQuickView(product.slug);
                         else window.location.href = route('products.show', product.slug);
                     }}

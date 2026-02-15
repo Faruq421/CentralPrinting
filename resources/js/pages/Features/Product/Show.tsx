@@ -125,7 +125,7 @@ const ProductGallery = ({ product }: {
 
 
     return (
-        <div className="sticky top-24 flex flex-col gap-4">
+        <div className="lg:sticky lg:top-24 flex flex-col gap-3 lg:gap-4">
             <Carousel setApi={setApi} className="w-full">
                 <CarouselContent>
                     {galleryItems.map((item, index) => (
@@ -305,13 +305,13 @@ export default function ProductShowPage({ product, related_products }: PageProps
             <Toaster richColors position="top-center" />
             <div className="bg-gray-50 font-sans text-gray-800 dark:bg-gray-900 dark:text-gray-200">
                 <main>
-                    <div className="container mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+                    <div className="container mx-auto max-w-7xl px-4 py-6 lg:py-12 sm:px-6 lg:px-8">
                         {/* Bagian Atas: Galeri & Panel Aksi */}
                         <motion.div
                             variants={containerVariants}
                             initial="hidden"
                             animate="visible"
-                            className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:gap-16"
+                            className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-16"
                         >
                             <motion.div variants={itemVariants}>
                                 <ProductGallery product={product} />
@@ -325,11 +325,11 @@ export default function ProductShowPage({ product, related_products }: PageProps
                                             <div className="flex items-center justify-between">
                                                 <p className="font-bold uppercase tracking-wider text-orange-500 text-sm">{product.category?.name ?? 'Uncategorized'}</p>
                                             </div>
-                                            <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100 sm:text-5xl leading-tight">{product.nama_produk}</h1>
+                                            <h1 className="text-2xl lg:text-4xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100 sm:text-5xl leading-tight">{product.nama_produk}</h1>
                                         </div>
 
-                                        <div className="flex items-center gap-6">
-                                            <div className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                                        <div className="flex flex-wrap items-center gap-3 lg:gap-6">
+                                            <div className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-gray-100">
                                                 Rp {totalPrice.toLocaleString('id-ID')}
                                             </div>
 
@@ -510,7 +510,8 @@ export default function ProductShowPage({ product, related_products }: PageProps
                                             </div>
                                         </div>
 
-                                        <div className="space-y-3 pt-2">
+                                        {/* Desktop action buttons */}
+                                        <div className="hidden lg:block space-y-3 pt-2">
                                             <TooltipProvider delayDuration={100}>
                                                 <Tooltip>
                                                     <TooltipTrigger asChild>
@@ -538,7 +539,7 @@ export default function ProductShowPage({ product, related_products }: PageProps
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true, margin: "-50px" }}
                             transition={{ duration: 0.6, ease: "easeOut" }}
-                            className="mt-24"
+                            className="mt-12 lg:mt-24"
                         >
                             <Tabs defaultValue="description">
                                 <TabsList className="grid w-full grid-cols-2 md:w-[400px] mx-auto">
@@ -735,12 +736,12 @@ export default function ProductShowPage({ product, related_products }: PageProps
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true, margin: "-50px" }}
                                 transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
-                                className="mt-24"
+                                className="mt-12 lg:mt-24"
                             >
-                                <h2 className="text-3xl font-bold tracking-tight text-center text-gray-900 dark:text-gray-100">
+                                <h2 className="text-xl lg:text-3xl font-bold tracking-tight text-center text-gray-900 dark:text-gray-100">
                                     Anda Mungkin Juga Suka
                                 </h2>
-                                <div className="mt-8 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+                                <div className="mt-4 lg:mt-8 grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
                                     {related_products.map((related_product) => (
                                         <ProductCard key={related_product.slug} product={related_product} />
                                     ))}
@@ -749,6 +750,26 @@ export default function ProductShowPage({ product, related_products }: PageProps
                         )}
                     </div>
                 </main>
+            </div>
+
+            {/* Mobile Sticky Bottom Add-to-Cart Bar */}
+            <div className="fixed bottom-16 left-0 right-0 z-40 lg:hidden">
+                <div className="bg-white/95 backdrop-blur-lg border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] px-4 py-3">
+                    <div className="flex items-center gap-3">
+                        <div className="flex-1 min-w-0">
+                            <p className="text-xs text-gray-500 truncate">Total Harga</p>
+                            <p className="text-lg font-bold text-orange-600 truncate">Rp {totalPrice.toLocaleString('id-ID')}</p>
+                        </div>
+                        <Button
+                            onClick={handleAddToCart}
+                            disabled={isActionDisabled}
+                            className="h-11 px-6 bg-gradient-to-r from-orange-500 to-red-500 text-sm font-bold text-white shadow-lg shadow-orange-500/20 disabled:opacity-70 disabled:cursor-not-allowed disabled:shadow-none flex-shrink-0"
+                        >
+                            <ShoppingCart className="mr-1.5 h-4 w-4" />
+                            Keranjang
+                        </Button>
+                    </div>
+                </div>
             </div>
         </SiteLayout>
     );

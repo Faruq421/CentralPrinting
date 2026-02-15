@@ -202,42 +202,42 @@ export default function MyOrdersPage() {
     return (
         <SiteLayout>
             <Head title="Pesanan Saya" />
-            <div className="container mx-auto px-6 py-12">
-                <h1 className="text-3xl font-bold text-gray-800 mb-8">
+            <div className="container mx-auto px-4 lg:px-6 py-6 lg:py-12">
+                <h1 className="text-xl lg:text-3xl font-bold text-gray-800 mb-4 lg:mb-8">
                     Pesanan Saya
                 </h1>
 
                 {orders.data.length > 0 ? (
-                    <div className="space-y-6">
+                    <div className="space-y-4 lg:space-y-6">
                         {orders.data.map((order) => (
                             <Card key={order.id} className="overflow-hidden">
-                                <CardHeader className="flex flex-row justify-between items-center bg-gray-50 border-b p-4">
+                                <CardHeader className="flex flex-col sm:flex-row justify-between sm:items-center bg-gray-50 border-b p-3 lg:p-4 gap-2">
                                     <div>
-                                        <CardTitle className="text-lg">Pesanan #{order.id}</CardTitle>
-                                        <p className="text-sm text-gray-500">
-                                            Tanggal: {new Date(order.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                        <CardTitle className="text-base lg:text-lg">Pesanan #{order.id}</CardTitle>
+                                        <p className="text-xs lg:text-sm text-gray-500">
+                                            {new Date(order.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
                                         </p>
                                     </div>
-                                    <div className="text-right flex gap-2">
+                                    <div className="flex flex-wrap gap-1.5 lg:gap-2">
                                         <Badge variant="outline" className={getPaymentStatusStyle(order.payment_status)}>
                                             {getPaymentStatusLabel(order.payment_status)}
                                         </Badge>
                                         {getStatusBadge(order.order_status)}
                                     </div>
                                 </CardHeader>
-                                <CardContent className="p-4 md:p-6">
-                                    <ul className="space-y-3 mb-4">
+                                <CardContent className="p-3 lg:p-6">
+                                    <ul className="space-y-2 lg:space-y-3 mb-3 lg:mb-4">
                                         {order.items.map(item => (
-                                            <li key={item.id} className="flex justify-between items-center">
-                                                <span className="text-gray-700">{item.product?.nama_produk || 'Produk dihapus'} (x{item.quantity})</span>
-                                                <span className="font-medium">{formatCurrency(item.price)}</span>
+                                            <li key={item.id} className="flex justify-between items-center text-sm lg:text-base">
+                                                <span className="text-gray-700 truncate mr-2">{item.product?.nama_produk || 'Produk dihapus'} (x{item.quantity})</span>
+                                                <span className="font-medium flex-shrink-0">{formatCurrency(item.price)}</span>
                                             </li>
                                         ))}
                                     </ul>
 
-                                    <div className="border-t pt-4 flex justify-between items-center">
-                                        <span className="text-gray-600">Total Pesanan</span>
-                                        <span className="text-xl font-bold text-gray-800">
+                                    <div className="border-t pt-3 lg:pt-4 flex justify-between items-center">
+                                        <span className="text-sm lg:text-base text-gray-600">Total Pesanan</span>
+                                        <span className="text-lg lg:text-xl font-bold text-gray-800">
                                             {formatCurrency(order.total_price)}
                                         </span>
                                     </div>
@@ -252,12 +252,12 @@ export default function MyOrdersPage() {
                                         </div>
                                     )}
                                 </CardContent>
-                                <CardFooter className="bg-gray-50 border-t p-4 flex justify-end space-x-2">
+                                <CardFooter className="bg-gray-50 border-t p-3 lg:p-4 flex flex-col sm:flex-row sm:justify-end gap-2 sm:gap-2">
                                     {/* Tombol Bayar Sekarang - hanya tampil jika unpaid dan belum dibatalkan */}
                                     {canCancelOrder(order) && (
                                         <Button
                                             size="sm"
-                                            className="bg-[#FF6500] hover:bg-[#e05a00] text-white"
+                                            className="bg-[#FF6500] hover:bg-[#e05a00] text-white w-full sm:w-auto"
                                             disabled={payingOrderId === order.id}
                                             onClick={() => handlePayOrder(order)}
                                         >
@@ -318,7 +318,7 @@ export default function MyOrdersPage() {
                                     )}
 
                                     {/* Tautkan ke halaman detail pesanan jika ada */}
-                                    <Button asChild variant="outline">
+                                    <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
                                         <Link href={route('orders.show', order.id)}>Lihat Detail</Link>
                                     </Button>
                                     {order.order_status?.toLowerCase() === 'completed' && (
@@ -337,11 +337,11 @@ export default function MyOrdersPage() {
                         ))}
                     </div>
                 ) : (
-                    <div className="text-center py-16 border rounded-lg">
-                        <Package className="h-16 w-16 mx-auto text-gray-400" />
-                        <h2 className="mt-4 text-xl font-semibold text-gray-700">Anda belum memiliki pesanan</h2>
-                        <p className="mt-2 text-gray-500">Semua pesanan Anda akan muncul di sini.</p>
-                        <Button asChild className="mt-6 bg-[#FF6500] hover:bg-[#C40C0C]">
+                    <div className="text-center py-10 lg:py-16 border rounded-lg">
+                        <Package className="h-12 w-12 lg:h-16 lg:w-16 mx-auto text-gray-400" />
+                        <h2 className="mt-3 lg:mt-4 text-lg lg:text-xl font-semibold text-gray-700">Anda belum memiliki pesanan</h2>
+                        <p className="mt-1.5 lg:mt-2 text-sm lg:text-base text-gray-500">Semua pesanan Anda akan muncul di sini.</p>
+                        <Button asChild className="mt-4 lg:mt-6 bg-[#FF6500] hover:bg-[#C40C0C]">
                             <Link href="/">Mulai Belanja</Link>
                         </Button>
                     </div>

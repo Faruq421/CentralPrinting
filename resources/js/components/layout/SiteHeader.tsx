@@ -32,7 +32,7 @@ import {
     DialogClose,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 
 
@@ -40,12 +40,12 @@ export default function SiteHeader({ auth }: PageProps) {
     const { user } = auth;
     const { categories } = usePage<PageProps & { categories: (string | { name: string })[] }>().props;
     const [isScrolled, setIsScrolled] = useState(false);
-    const [isVisible, setIsVisible] = useState(true); // Track visibility
-    const lastScrollY = React.useRef(0); // Track last scroll position
+    const [isVisible, setIsVisible] = useState(true);
+    const lastScrollY = React.useRef(0);
 
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    const [isCategoryOpen, setIsCategoryOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+    const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
+    const searchInputRef = React.useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         let ticking = false;
@@ -56,23 +56,15 @@ export default function SiteHeader({ auth }: PageProps) {
                     const currentScrollY = window.scrollY;
                     const scrollDifference = lastScrollY.current - currentScrollY;
 
-                    // Always show shadow when scrolled
                     setIsScrolled(currentScrollY > 0);
 
-                    // SMART HEADER LOGIC (Direction-based, not position-based)
-                    // Rule 1: Always show when near top
                     if (currentScrollY < 100) {
                         setIsVisible(true);
-                    }
-                    // Rule 2: Scrolling UP (positive difference) - show after 10px threshold
-                    else if (scrollDifference > 10) {
+                    } else if (scrollDifference > 10) {
                         setIsVisible(true);
-                    }
-                    // Rule 3: Scrolling DOWN (negative difference) - hide after 5px threshold
-                    else if (scrollDifference < -5) {
+                    } else if (scrollDifference < -5) {
                         setIsVisible(false);
                     }
-                    // If scrollDifference is between -5 and 10, do nothing (prevent jitter)
 
                     lastScrollY.current = currentScrollY;
                     ticking = false;
@@ -85,22 +77,24 @@ export default function SiteHeader({ auth }: PageProps) {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    // Handle search submission
     const handleSearch = (e?: React.FormEvent) => {
         if (e) e.preventDefault();
         if (searchQuery.trim()) {
             router.get(route('shop.index'), { search: searchQuery.trim() });
+            setIsMobileSearchOpen(false);
         }
     };
 
+    useEffect(() => {
+        if (isMobileSearchOpen && searchInputRef.current) {
+            setTimeout(() => searchInputRef.current?.focus(), 100);
+        }
+    }, [isMobileSearchOpen]);
 
-
-
-    // ... (existing code) ...
 
     return (
         <header className="w-full relative z-50">
-            {/* WRAPPER: SMART HEADER (Top + Main + Nav) */}
+            {/* WRAPPER: SMART HEADER */}
             <motion.div
                 className={cn(
                     "fixed top-0 left-0 right-0 z-40 w-full bg-white",
@@ -110,7 +104,7 @@ export default function SiteHeader({ auth }: PageProps) {
                 animate={{ y: isVisible ? 0 : "-100%" }}
                 transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
             >
-                {/* 1. TOP BAR (Informasi & Kontak) */}
+                {/* 1. TOP BAR - Hidden on mobile */}
                 <div className="bg-gray-100 text-[11px] font-medium text-gray-500 py-1.5 border-b border-gray-200 hidden md:block">
                     <div className="container mx-auto px-4 lg:px-8 flex justify-between items-center">
                         <div className="flex items-center space-x-6">
@@ -132,12 +126,12 @@ export default function SiteHeader({ auth }: PageProps) {
                 {/* 2. MAIN HEADER (Logo, Search, Actions) */}
                 <div className={cn(
                     "border-b border-gray-100 transition-all duration-300",
-                    isScrolled ? "py-3" : "py-5"
+                    isScrolled ? "py-2 lg:py-3" : "py-3 lg:py-5"
                 )}>
-                    <div className="container mx-auto px-4 lg:px-8 flex items-center justify-between gap-8">
+                    <div className="container mx-auto px-4 lg:px-8 flex items-center justify-between gap-4 lg:gap-8">
                         {/* Logo */}
-                        <Link href="/" className="flex-shrink-0 mr-4">
-                            <img src="/storage/logo/logo.png" alt="Central Printing" className="h-10 w-auto" />
+                        <Link href="/" className="flex-shrink-0">
+                            <img src="/storage/logo/logo.png" alt="Central Printing" className="h-8 lg:h-10 w-auto" />
                         </Link>
 
                         {/* Search Bar (Desktop) */}
@@ -157,25 +151,25 @@ export default function SiteHeader({ auth }: PageProps) {
                         </form>
 
                         {/* Right Actions */}
-                        <div className="flex items-center gap-2 lg:gap-6 flex-shrink-0">
-                            {/* Mobile Menu Trigger */}
-                            <div className="lg:hidden">
-                                <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(true)}>
-                                    <Menu className="h-6 w-6 text-gray-700" />
-                                </Button>
-                            </div>
-
+                        <div className="flex items-center gap-1 lg:gap-6 flex-shrink-0">
                             {/* Search Trigger (Mobile) */}
                             <div className="lg:hidden">
-                                <Button variant="ghost" size="icon">
-                                    <Search className="h-6 w-6 text-gray-700" />
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-9 w-9"
+                                    onClick={() => setIsMobileSearchOpen(true)}
+                                >
+                                    <Search className="h-5 w-5 text-gray-700" />
                                 </Button>
                             </div>
 
-                            {/* Cart */}
-                            <CartSheet />
+                            {/* Cart (desktop only, mobile uses bottom nav) */}
+                            <div className="hidden lg:block">
+                                <CartSheet />
+                            </div>
 
-                            {/* User / Auth */}
+                            {/* User / Auth (Desktop only) */}
                             <div className="hidden lg:block pl-2 border-l border-gray-200">
                                 {user ? (
                                     <DropdownMenu>
@@ -227,19 +221,18 @@ export default function SiteHeader({ auth }: PageProps) {
                     </div>
                 </div>
 
-                {/* 3. NAVIGATION BAR (Categories & Menu) */}
+                {/* 3. NAVIGATION BAR - Desktop only */}
                 <div className="bg-white border-b border-gray-200 hidden lg:block">
                     <div className="container mx-auto px-4 lg:px-8">
                         <div className="flex items-center gap-8">
                             {/* Categories Dropdown */}
                             <div className="relative group/cat z-30">
                                 <button className="flex items-center gap-3 bg-gray-100 px-6 py-3.5 text-sm font-bold text-gray-800 hover:bg-gray-200 transition-colors cursor-pointer border-l border-r border-gray-100 min-w-[150px]">
-                                    <Menu className="h-5 w-" />
+                                    <Menu className="h-5 w-5" />
                                     Kategori
                                     <ChevronDown className="h-4 w-4 ml-auto text-gray-500" />
                                 </button>
 
-                                {/* Mega Menu Content (Hover) */}
                                 <div className="absolute top-full left-0 w-[600px] bg-white shadow-xl rounded-b-xl border border-gray-100 opacity-0 invisible group-hover/cat:opacity-100 group-hover/cat:visible transition-all duration-200 translate-y-2 group-hover/cat:translate-y-0">
                                     <div className="grid grid-cols-3 gap-4 p-6">
                                         {categories && categories.map((category) => {
@@ -321,79 +314,68 @@ export default function SiteHeader({ auth }: PageProps) {
                 </div>
             </motion.div>
 
-            {/* Mobile Menu Dialog */}
-            <Dialog open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-                <DialogContent className="w-full h-[100dvh] max-w-full rounded-none border-none p-0 flex flex-col bg-white overflow-hidden">
-                    <DialogHeader className="px-5 py-4 border-b flex flex-row items-center justify-between shrink-0 bg-white shadow-sm z-10">
-                        <DialogTitle>
-                            <img src="/storage/logo/logo.png" alt="Logo" className="h-8 w-auto" />
-                        </DialogTitle>
-                        <DialogClose className="rounded-full p-2 bg-gray-100 hover:bg-gray-200 transition-colors">
-                            <X className="h-5 w-5 text-gray-500" />
-                            <span className="sr-only">Close</span>
-                        </DialogClose>
-                    </DialogHeader>
-
-                    {/* ... Mobile Menu Content check ... */}
-                    {/* (Omitting full inner content for brevity, replacement targets the closing of Dialog and Header) */}
-
-                    <div className="flex-1 overflow-y-auto bg-gray-50">
-                        {/* Re-including the first block of mobile menu to match content context if needed, but actually I just need to find the specific closing block or use precise match. 
-                           Better to target the Dialog component end.
-                        */}
-                        <div className="p-4 bg-white mb-2">
-                            {!user ? (
-                                <div className="grid grid-cols-2 gap-3">
-                                    <Button variant="outline" className="w-full border-orange-200 text-orange-600 hover:bg-orange-50" asChild>
-                                        <Link href={route('login')}>Masuk</Link>
-                                    </Button>
-                                    <Button className="w-full bg-orange-600 hover:bg-orange-700 text-white" asChild>
-                                        <Link href={route('register')}>Daftar</Link>
-                                    </Button>
+            {/* Mobile Search Overlay */}
+            <AnimatePresence>
+                {isMobileSearchOpen && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        transition={{ duration: 0.25, ease: 'easeOut' }}
+                        className="fixed inset-0 z-[60] bg-white lg:hidden"
+                    >
+                        <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 shadow-sm">
+                            <form onSubmit={handleSearch} className="flex-1 flex items-center gap-2">
+                                <div className="flex-1 relative">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                    <input
+                                        ref={searchInputRef}
+                                        type="text"
+                                        placeholder="Cari produk, layanan..."
+                                        className="w-full h-10 pl-10 pr-4 rounded-full border border-gray-200 bg-gray-50 focus:bg-white focus:border-orange-400 focus:ring-2 focus:ring-orange-100 outline-none text-sm transition-all"
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                    />
                                 </div>
-                            ) : (
-                                <div className="flex items-center gap-4 p-3 bg-orange-50 rounded-xl border border-orange-100">
-                                    <div className="h-12 w-12 bg-white rounded-full flex items-center justify-center text-orange-600 font-bold text-xl shadow-sm">
-                                        {user.name.charAt(0).toUpperCase()}
-                                    </div>
-                                    <div>
-                                        <p className="font-bold text-gray-900">{user.name}</p>
-                                        <p className="text-xs text-gray-500">{user.email}</p>
-                                    </div>
-                                </div>
-                            )}
+                                <Button type="submit" size="sm" className="bg-orange-600 hover:bg-orange-700 text-white rounded-full px-5 h-10 font-semibold text-sm">
+                                    Cari
+                                </Button>
+                            </form>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-10 w-10 rounded-full text-gray-500"
+                                onClick={() => setIsMobileSearchOpen(false)}
+                            >
+                                <X className="h-5 w-5" />
+                            </Button>
                         </div>
 
-                        <div className="bg-white p-2">
-                            <nav className="space-y-1">
-                                <Link
-                                    href="/"
-                                    onClick={() => setIsMobileMenuOpen(false)}
-                                    className="flex items-center px-4 py-3 text-base font-semibold text-gray-700 hover:bg-gray-50 rounded-lg"
-                                >
-                                    Beranda
-                                </Link>
-                                {/* ... rest of nav ... */}
-                                {/* Since I cannot match huge block easily without risk, I will replace the END of the file */}
-                            </nav>
+                        {/* Quick category suggestions */}
+                        <div className="px-4 py-4">
+                            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Kategori Populer</p>
+                            <div className="flex flex-wrap gap-2">
+                                {categories && categories.slice(0, 8).map((category) => {
+                                    const categoryName = typeof category === 'string' ? category : category.name;
+                                    return (
+                                        <Link
+                                            key={categoryName}
+                                            href={route('shop.index', { category: categoryName })}
+                                            onClick={() => setIsMobileSearchOpen(false)}
+                                            className="px-3.5 py-2 bg-gray-50 hover:bg-orange-50 hover:text-orange-600 border border-gray-100 rounded-full text-sm font-medium text-gray-600 transition-colors"
+                                        >
+                                            {categoryName}
+                                        </Link>
+                                    );
+                                })}
+                            </div>
                         </div>
-                        {/* Only replacing the end part logic is risky if I don't match exactly.
-                            Let's use a simpler target: The end of the file return.
-                        */}
-                    </div>
-                    {user && (
-                        <div className="mt-2 bg-white p-4">
-                            <Link href={route('logout')} method="post" as="button" className="flex items-center justify-center w-full py-2.5 text-red-600 font-medium rounded-lg hover:bg-red-50 transition-colors">
-                                <LogOut className="h-4 w-4 mr-2" />
-                                Keluar dari Akun
-                            </Link>
-                        </div>
-                    )}
-                </DialogContent>
-            </Dialog>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* SPACER FOR FIXED HEADER */}
-            <div className="h-[80px] md:h-[115px] lg:h-[170px] w-full" aria-hidden="true" />
+            <div className="h-[60px] md:h-[115px] lg:h-[170px] w-full" aria-hidden="true" />
         </header>
     );
 }
