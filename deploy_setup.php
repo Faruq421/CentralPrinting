@@ -54,7 +54,7 @@ if (!isset($_SESSION['deploy_auth']) || $_SESSION['deploy_auth'] !== true) {
 // === MAIN SCRIPT ===
 
 // Detect Laravel path
-$laravelPath = __DIR__ . '/../centralprinting';
+$laravelPath = __DIR__ . '/../CentralPrinting';
 if (!file_exists($laravelPath . '/artisan')) {
     // Fallback: maybe Laravel is in parent directory directly
     $laravelPath = __DIR__ . '/..';
