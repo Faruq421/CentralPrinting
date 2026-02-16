@@ -319,7 +319,7 @@ if (isset($_POST['action'])) {
             break;
 
         case 'debug_500':
-            $actionName = '🐛 Debug Error 500';
+            $actionName = '🐛 Debug Error 500'; 
             $result = "=== DIAGNOSTIK LENGKAP ===\n\n";
 
             // 1. Test shell_exec
