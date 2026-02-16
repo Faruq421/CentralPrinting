@@ -51,3 +51,9 @@ export const operationalNavItems: NavItem[] = [
     },
     // Future: Reports, Settings etc.
 ];
+
+export const mainNavItems: NavItem[] = [
+    ...overviewNavItems,
+    ...commerceNavItems,
+    ...operationalNavItems,
+];
