@@ -318,6 +318,164 @@ if (isset($_POST['action'])) {
             $result .= "\nDone! Semua folder storage dan cache sudah di-fix.";
             break;
 
+        case 'debug_500':
+            $actionName = '🐛 Debug Error 500';
+            $result = "=== DIAGNOSTIK LENGKAP ===\n\n";
+
+            // 1. Test shell_exec
+            $result .= "--- 1. Test shell_exec ---\n";
+            $testShell = shell_exec('echo "SHELL_EXEC_OK" 2>&1');
+            $result .= "shell_exec test: " . ($testShell ? trim($testShell) : 'GAGAL/DISABLED') . "\n\n";
+
+            // 2. PHP CLI version
+            $result .= "--- 2. PHP CLI ---\n";
+            $phpCli = shell_exec('php -v 2>&1');
+            $result .= ($phpCli ?: 'php CLI tidak tersedia') . "\n";
+
+            // 3. Test artisan directly
+            $result .= "--- 3. Test Artisan ---\n";
+            $artisanTest = shell_exec('cd ' . escapeshellarg($laravelPath) . ' && php artisan --version 2>&1');
+            $result .= "artisan --version: " . ($artisanTest ?: '(KOSONG - artisan gagal)') . "\n";
+
+            // If artisan failed, try with error display
+            if (!$artisanTest) {
+                $artisanDebug = shell_exec('cd ' . escapeshellarg($laravelPath) . ' && php -d display_errors=1 -d error_reporting=E_ALL artisan --version 2>&1');
+                $result .= "artisan (debug mode): " . ($artisanDebug ?: '(masih kosong)') . "\n";
+            }
+
+            // 4. Check vendor/autoload.php
+            $result .= "\n--- 4. Vendor Autoload ---\n";
+            $autoloadPath = $laravelPath . '/vendor/autoload.php';
+            if (file_exists($autoloadPath)) {
+                $result .= "✅ vendor/autoload.php ada\n";
+                $result .= "Size: " . filesize($autoloadPath) . " bytes\n";
+                // Try to load it
+                try {
+                    ob_start();
+                    require_once $autoloadPath;
+                    ob_end_clean();
+                    $result .= "✅ autoload.php berhasil di-load\n";
+                } catch (\Throwable $e) {
+                    ob_end_clean();
+                    $result .= "❌ Error saat load autoload.php:\n" . $e->getMessage() . "\n" . $e->getFile() . ":" . $e->getLine() . "\n";
+                }
+            } else {
+                $result .= "❌ vendor/autoload.php TIDAK ADA!\n";
+            }
+
+            // 5. Check public_html/index.php
+            $result .= "\n--- 5. index.php di public_html ---\n";
+            $indexPath = __DIR__ . '/index.php';
+            if (file_exists($indexPath)) {
+                $indexContent = file_get_contents($indexPath);
+                $result .= "✅ index.php ada (" . strlen($indexContent) . " bytes)\n";
+
+                // Extract key paths from index.php
+                if (preg_match("/require.*?['\"](.+?bootstrap.*?app\.php)['\"]|require.*?['\"](.+?autoload\.php)['\"]/", $indexContent, $matches)) {
+                    $result .= "Bootstrap require: " . ($matches[1] ?: $matches[2]) . "\n";
+                }
+
+                // Show the important lines
+                $lines = explode("\n", $indexContent);
+                $result .= "\nKonten penting:\n";
+                foreach ($lines as $line) {
+                    $trimmed = trim($line);
+                    if (strpos($trimmed, 'require') !== false || strpos($trimmed, '__DIR__') !== false || strpos($trimmed, 'maintenance') !== false) {
+                        $result .= "  > $trimmed\n";
+                    }
+                }
+
+                // Check if referenced files exist
+                $result .= "\nFile yang direferensi index.php:\n";
+                // Look for autoload path
+                if (preg_match("/require\s+(.+autoload\.php)/", $indexContent, $m)) {
+                    $result .= "autoload require: " . trim($m[1], "'; ") . "\n";
+                }
+                if (preg_match("/require\s+(.+app\.php)/", $indexContent, $m)) {
+                    $result .= "bootstrap require: " . trim($m[1], "'; ") . "\n";
+                }
+            } else {
+                $result .= "❌ index.php TIDAK ADA di public_html!\n";
+            }
+
+            // 6. Check .env APP_KEY
+            $result .= "\n--- 6. Cek .env ---\n";
+            $envPath = $laravelPath . '/.env';
+            if (file_exists($envPath)) {
+                $envContent = file_get_contents($envPath);
+                $envLines = explode("\n", $envContent);
+                $importantKeys = ['APP_NAME', 'APP_ENV', 'APP_KEY', 'APP_DEBUG', 'APP_URL', 'DB_CONNECTION', 'DB_HOST', 'DB_DATABASE', 'DB_USERNAME'];
+                foreach ($envLines as $envLine) {
+                    $envLine = trim($envLine);
+                    foreach ($importantKeys as $key) {
+                        if (strpos($envLine, $key . '=') === 0) {
+                            if ($key === 'APP_KEY') {
+                                $val = substr($envLine, strlen($key) + 1);
+                                $result .= "$key=" . (strlen($val) > 5 ? '***SET*** (length: ' . strlen($val) . ')' : '❌ KOSONG/PENDEK') . "\n";
+                            } elseif ($key === 'DB_USERNAME') {
+                                $result .= "$key=***\n";
+                            } else {
+                                $result .= "$envLine\n";
+                            }
+                            break;
+                        }
+                    }
+                }
+            } else {
+                $result .= "❌ .env TIDAK ADA!\n";
+            }
+
+            // 7. Check .htaccess
+            $result .= "\n--- 7. .htaccess ---\n";
+            $htaccessPath = __DIR__ . '/.htaccess';
+            if (file_exists($htaccessPath)) {
+                $result .= "✅ .htaccess ada (" . filesize($htaccessPath) . " bytes)\n";
+                $htContent = file_get_contents($htaccessPath);
+                if (strpos($htContent, 'RewriteEngine') !== false) {
+                    $result .= "✅ RewriteEngine ditemukan\n";
+                }
+                if (strpos($htContent, 'index.php') !== false) {
+                    $result .= "✅ Rewrite ke index.php ditemukan\n";
+                }
+            } else {
+                $result .= "❌ .htaccess TIDAK ADA di public_html!\n";
+            }
+
+            // 8. Try to bootstrap Laravel directly
+            $result .= "\n--- 8. Test Bootstrap Laravel ---\n";
+            try {
+                $appFile = $laravelPath . '/bootstrap/app.php';
+                if (file_exists($appFile)) {
+                    $result .= "✅ bootstrap/app.php ada\n";
+                } else {
+                    $result .= "❌ bootstrap/app.php TIDAK ADA!\n";
+                }
+
+                $cachedConfig = $laravelPath . '/bootstrap/cache/config.php';
+                $cachedRoutes = $laravelPath . '/bootstrap/cache/routes-v7.php';
+                $result .= "config cache: " . (file_exists($cachedConfig) ? '✅ ada' : '⚠️ tidak ada') . "\n";
+                $result .= "routes cache: " . (file_exists($cachedRoutes) ? '✅ ada' : '⚠️ tidak ada') . "\n";
+
+                // List what's in bootstrap/cache
+                $cacheDir = $laravelPath . '/bootstrap/cache';
+                if (is_dir($cacheDir)) {
+                    $files = scandir($cacheDir);
+                    $result .= "bootstrap/cache files: " . implode(', ', array_diff($files, ['.', '..'])) . "\n";
+                }
+            } catch (\Throwable $e) {
+                $result .= "❌ Error: " . $e->getMessage() . "\n";
+            }
+
+            // 9. Direct PHP error test
+            $result .= "\n--- 9. Test PHP Error Output ---\n";
+            $testPhp = shell_exec('cd ' . escapeshellarg($laravelPath) . ' && php -d display_errors=1 -r "require_once \'vendor/autoload.php\'; echo \'AUTOLOAD_OK\';" 2>&1');
+            $result .= "PHP autoload test: " . ($testPhp ?: '(kosong)') . "\n";
+
+            $testBootstrap = shell_exec('cd ' . escapeshellarg($laravelPath) . ' && php -d display_errors=1 -r "require_once \'vendor/autoload.php\'; \$app = require_once \'bootstrap/app.php\'; echo \'BOOTSTRAP_OK\';" 2>&1');
+            $result .= "PHP bootstrap test: " . ($testBootstrap ?: '(kosong)') . "\n";
+
+            break;
+
         case 'queue_work':
             $actionName = '⚙️ Process Queue';
             $result = runArtisan('queue:work --stop-when-empty', $laravelPath);
@@ -422,6 +580,7 @@ if (isset($_POST['action'])) {
             <div class="grid">
                 <form method="POST"><button type="submit" name="action" value="migrate_status" class="btn btn-blue">📋 Status Migrasi</button></form>
                 <form method="POST"><button type="submit" name="action" value="queue_work" class="btn btn-blue">⚙️ Process Queue</button></form>
+                <form method="POST"><button type="submit" name="action" value="debug_500" class="btn btn-red">🐛 Debug Error 500</button></form>
             </div>
         </div>
 
