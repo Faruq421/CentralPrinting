@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetFooter, SheetClose } from '@/components/ui/sheet';
 import { Checkbox } from '@/components/ui/checkbox';
 import { usePage, Link, router } from '@inertiajs/react';
+import { route } from 'ziggy-js';
 import { ShoppingCart, Trash2, Pencil, PackageOpen } from 'lucide-react';
 import { PageProps } from '@/types';
 import { useMemo, useState, useEffect } from 'react';
@@ -35,7 +36,7 @@ const CartItemCard = ({
     onSelect: (itemId: string) => void;
 }) => {
     const removeItem = () => {
-        router.delete(route('cart.destroy', item.id), {
+        router.post(route('cart.destroy.remove', item.id), {}, {
             preserveState: true,
             preserveScroll: true,
         });

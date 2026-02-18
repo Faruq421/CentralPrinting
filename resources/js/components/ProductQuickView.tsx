@@ -343,11 +343,7 @@ export function ProductQuickView({ productSlug, cartItemId, isOpen, onClose }: P
             data.design = { type: 'upload', value: existingDesign.value, original_filename: existingDesign.original_filename };
         }
 
-        if (isEditMode) {
-            data._method = 'PATCH';
-        }
-
-        const routeName = isEditMode ? 'cart.update' : 'cart.store';
+        const routeName = isEditMode ? 'cart.update.post' : 'cart.store';
         const routeParams = isEditMode ? { cartItemId } : {};
 
         router.post(route(routeName, routeParams), data, {

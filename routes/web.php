@@ -17,7 +17,9 @@ Route::prefix('cart')->name('cart.')->group(function () {
     Route::get('/', [CartController::class, 'index'])->name('index');
     Route::post('/', [CartController::class, 'store'])->name('store');
     Route::patch('/{cartItemId}', [CartController::class, 'update'])->name('update');
+    Route::post('/{cartItemId}/update', [CartController::class, 'update'])->name('update.post');
     Route::delete('/{cartItemId}', [CartController::class, 'destroy'])->name('destroy');
+    Route::post('/{cartItemId}/remove', [CartController::class, 'destroy'])->name('destroy.remove');
 });
 
 // Rute untuk Halaman Toko "Produk & Jasa"
