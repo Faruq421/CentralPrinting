@@ -635,17 +635,60 @@ if (isset($_POST['action'])) {
             break;
 
         case 'npm_install':
-            $actionName = '📦 NPM Install';
-            $result = "Menjalankan npm install...\n\n";
-            $output = shell_exec('cd ' . escapeshellarg($laravelPath) . ' && npm install 2>&1');
-            $result .= ($output ?: '❌ Tidak ada output. Pastikan Node.js dan NPM terinstall di server.');
-            break;
-
         case 'npm_build':
-            $actionName = '🏗️ NPM Build';
-            $result = "Menjalankan npm run build...\n(Proses ini bisa memakan waktu 1-3 menit)\n\n";
-            $output = shell_exec('cd ' . escapeshellarg($laravelPath) . ' && npm run build 2>&1');
-            $result .= ($output ?: '❌ Tidak ada output. Pastikan Node.js dan NPM terinstall di server.');
+            // Deteksi path NPM di cPanel shared hosting
+            $npmPaths = [
+                '/usr/local/bin/npm',
+                '/usr/bin/npm',
+                trim(shell_exec('which npm 2>/dev/null') ?: ''),
+                trim(shell_exec('bash -lc "which npm" 2>/dev/null') ?: ''),
+            ];
+            $npmBin = '';
+            foreach ($npmPaths as $p) {
+                if ($p && file_exists($p)) { $npmBin = $p; break; }
+            }
+            
+            // Jika tidak ditemukan, coba cari via nvm atau alternatif
+            if (!$npmBin) {
+                $homeDir = getenv('HOME') ?: '/home/' . get_current_user();
+                $nvmNode = glob($homeDir . '/.nvm/versions/node/*/bin/npm');
+                if (!empty($nvmNode)) $npmBin = end($nvmNode);
+            }
+
+            // Deteksi Node.js juga
+            $nodePath = trim(shell_exec('which node 2>/dev/null') ?: '');
+            if (!$nodePath) $nodePath = trim(shell_exec('bash -lc "which node" 2>/dev/null') ?: '');
+
+            if (!$npmBin) {
+                $actionName = $action === 'npm_install' ? '📦 NPM Install' : '🏗️ NPM Build';
+                $result = "❌ NPM tidak ditemukan di server.\n\n";
+                $result .= "Path yang dicek:\n";
+                foreach ($npmPaths as $p) { if ($p) $result .= "  - $p\n"; }
+                $result .= "\n📌 Solusi:\n";
+                $result .= "1. Masuk ke cPanel → Setup Node.js App → Buat aplikasi Node.js\n";
+                $result .= "2. Atau hubungi provider hosting untuk mengaktifkan Node.js\n";
+                $result .= "3. Alternatif: Build di lokal dan push folder public/build\n";
+                $result .= "\nInfo server:\n";
+                $result .= "Node: " . ($nodePath ?: 'tidak ditemukan') . "\n";
+                $result .= "PHP user: " . get_current_user() . "\n";
+                $result .= "HOME: " . (getenv('HOME') ?: 'tidak diset') . "\n";
+                break;
+            }
+
+            // Siapkan environment PATH
+            $npmDir = dirname($npmBin);
+            $envPrefix = "export PATH=$npmDir:\$PATH && ";
+            
+            if ($action === 'npm_install') {
+                $actionName = '📦 NPM Install';
+                $result = "Menjalankan npm install...\nNPM: $npmBin\n\n";
+                $output = shell_exec('cd ' . escapeshellarg($laravelPath) . ' && ' . $envPrefix . escapeshellarg($npmBin) . ' install 2>&1');
+            } else {
+                $actionName = '🏗️ NPM Build';
+                $result = "Menjalankan npm run build...\nNPM: $npmBin\n(Proses ini bisa memakan waktu 1-3 menit)\n\n";
+                $output = shell_exec('cd ' . escapeshellarg($laravelPath) . ' && ' . $envPrefix . escapeshellarg($npmBin) . ' run build 2>&1');
+            }
+            $result .= ($output ?: '❌ Tidak ada output.');
             break;
 
         case 'queue_work':
