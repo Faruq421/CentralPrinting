@@ -36,6 +36,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'order-notify',
             'api/payment/notification',
             'wilayah/*',
+            'shipping/*',
         ]);
 
         $middleware->alias([

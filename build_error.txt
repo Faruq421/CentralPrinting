@@ -1,0 +1,85 @@
+﻿[36mvite v7.1.2 [32mbuilding for production...[36m[39m
+transforming...
+[32mΓ£ô[39m 1551 modules transformed.
+node.exe : 
+[31mΓ£ù[39m Build 
+failed in 3.51s
+At C:\Users\ACER\App
+Data\Roaming\npm\npx
+.ps1:24 char:5
++     & "node$exe"  
+"$basedir/node_modul
+es/npm/bin/npx-cli.j
+s" $args
++     ~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~
+    + CategoryInfo  
+            : NotS  
+  pecified: ([31   
+ mΓ£ù[39m Build    
+ failed in 3.51    
+s:String) [], R    
+emoteException
+    + FullyQualifie 
+   dErrorId : Nati  
+  veCommandError
+ 
+[31merror during 
+build:
+[31m[vite:load-fall
+back] Could not 
+load /resources/js/a
+ctions/App/Http/Cont
+rollers/Auth/Confirm
+ablePasswordControll
+er (imported by reso
+urces/js/pages/auth/
+confirm-password.tsx
+): ENOENT: no such 
+file or directory, 
+open 'D:\resources\j
+s\actions\App\Http\C
+ontrollers\Auth\Conf
+irmablePasswordContr
+oller'[31m
+    at async open (n
+ode:internal/fs/prom
+ises:639:25)
+    at async 
+Object.readFile (nod
+e:internal/fs/promis
+es:1246:14)
+    at async 
+Object.handler (file
+:///D:/Kampus/PA/Pro
+ject/tesreact/Centra
+lPrinting/node_modul
+es/vite/dist/node/ch
+unks/dep-CMEinpL-.js
+:33995:21)
+    at async PluginD
+river.hookFirstAndGe
+tPlugin (file:///D:/
+Kampus/PA/Project/te
+sreact/CentralPrinti
+ng/node_modules/roll
+up/dist/es/shared/no
+de-entry.js:22233:28
+)
+    at async file://
+/D:/Kampus/PA/Projec
+t/tesreact/CentralPr
+inting/node_modules/
+rollup/dist/es/share
+d/node-entry.js:2123
+7:33
+    at async 
+Queue.work (file:///
+D:/Kampus/PA/Project
+/tesreact/CentralPri
+nting/node_modules/r
+ollup/dist/es/shared
+/node-entry.js:22461
+:32)[39m

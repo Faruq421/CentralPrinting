@@ -13,6 +13,13 @@ Route::prefix('wilayah')->name('shipping.')->group(function () {
     Route::post('/opts', [RajaOngkirController::class, 'getAllShippingOptions'])->name('all-options');
 });
 
+// Compatibility Routes for Compiled Frontend (Old URLs)
+Route::prefix('shipping')->group(function () {
+    Route::get('/provinces', [RajaOngkirController::class, 'getProvinces']);
+    Route::get('/cities/{provinceId}', [RajaOngkirController::class, 'getCities']);
+    Route::post('/all-options', [RajaOngkirController::class, 'getAllShippingOptions']);
+});
+
 // Rute untuk Customer (checkout, my-orders, payment update)
 Route::middleware(['auth'])->group(function () {
     Route::get('/checkout', [OrderController::class, 'create'])->name('checkout.create');

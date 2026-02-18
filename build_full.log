@@ -1,0 +1,69 @@
+[36mvite v7.1.2 [32mbuilding for production...[36m[39m
+transforming...
+[32m???[39m 1547 modules transformed.
+node.exe : [31m???[39m 
+Build failed in 3.51s
+At C:\Users\ACER\AppData\
+Roaming\npm\npx.ps1:24 
+char:5
++     & "node$exe"  "$bas
+edir/node_modules/npm/bin
+/npx-cli.js" $args
++     ~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
+    + CategoryInfo       
+       : NotSpecified:   
+  ([31m???[39m Build   
+  failed in 3.51s:Str    
+ing) [], RemoteExcep    
+tion
+    + FullyQualifiedErro 
+   rId : NativeCommandE  
+  rror
+ 
+[31merror during build:
+[31m[vite:load-fallback]
+ Could not load /resource
+s/js/actions/App/Http/Con
+trollers/Auth/NewPassword
+Controller (imported by r
+esources/js/pages/auth/re
+set-password.tsx): 
+ENOENT: no such file or 
+directory, open 'D:\resou
+rces\js\actions\App\Http\
+Controllers\Auth\NewPassw
+ordController'[31m
+    at async open (node:i
+nternal/fs/promises:639:2
+5)
+    at async 
+Object.readFile (node:int
+ernal/fs/promises:1246:14
+)
+    at async 
+Object.handler (file:///D
+:/Kampus/PA/Project/tesre
+act/CentralPrinting/node_
+modules/vite/dist/node/ch
+unks/dep-CMEinpL-.js:3399
+5:21)
+    at async PluginDriver
+.hookFirstAndGetPlugin (f
+ile:///D:/Kampus/PA/Proje
+ct/tesreact/CentralPrinti
+ng/node_modules/rollup/di
+st/es/shared/node-entry.j
+s:22233:28)
+    at async file:///D:/K
+ampus/PA/Project/tesreact
+/CentralPrinting/node_mod
+ules/rollup/dist/es/share
+d/node-entry.js:21237:33
+    at async Queue.work (
+file:///D:/Kampus/PA/Proj
+ect/tesreact/CentralPrint
+ing/node_modules/rollup/d
+ist/es/shared/node-entry.
+js:22461:32)[39m
