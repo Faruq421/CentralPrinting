@@ -160,7 +160,7 @@ function ProductTable({ items, onSort }: ProductTableProps) {
                                                 className="text-red-600"
                                                 onClick={() => {
                                                     if (confirm('Apakah Anda yakin ingin menghapus produk ini?')) {
-                                                        router.post(route('products.destroy.post', item.id_produk), {}, {
+                                                        router.post(route('products.destroy.remove', item.id_produk), {}, {
                                                             preserveScroll: true,
                                                         });
                                                     }
