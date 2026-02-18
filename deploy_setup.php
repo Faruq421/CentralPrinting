@@ -481,45 +481,114 @@ if (isset($_POST['action'])) {
             $source = $laravelPath . '/storage/app/public';
             $destination = __DIR__ . '/storage';
 
-            $result = "Memindahkan file dari:\nSource: $source\nDest: $destination\n\n";
+            $result = "Memproses penyelarasan storage...\n";
+            $result .= "Source: $source\n";
+            $result .= "Destination: $destination\n\n";
 
             if (!is_dir($source)) {
-                $result .= "❌ Folder source tidak ditemukan.";
+                $result .= "❌ Folder source internal tidak ditemukan ($source).\n";
                 break;
             }
 
+            // PENTING: Jika destination adalah SYMLINK, kita harus HAPUS symlink-nya
+            if (file_exists($destination) && is_link($destination)) {
+                $result .= "⚠️ Menemukan SYMLINK di destination. Menghapus symlink agar bisa diganti folder asli...\n";
+                if (unlink($destination)) {
+                    $result .= "✅ Symlink berhasil dihapus.\n";
+                } else {
+                    $result .= "❌ Gagal menghapus symlink. Silakan hapus folder 'storage' di public_html secara manual via File Manager.\n";
+                    break;
+                }
+            }
+
             if (!is_dir($destination)) {
-                @mkdir($destination, 0775, true);
-                $result .= "📁 Folder destination dibuat.\n";
+                if (@mkdir($destination, 0775, true)) {
+                    $result .= "📁 Folder destination asli (bukan link) berhasil dibuat.\n";
+                } else {
+                    $result .= "❌ Gagal membuat folder destination. Periksa izin folder public_html.\n";
+                    break;
+                }
+            } else {
+                $result .= "ℹ️ Folder destination sudah ada.\n";
             }
 
             // Function to copy directory recursively
-            function recursivlyCopy($src, $dst) {
-                $dir = opendir($src);
-                @mkdir($dst, 0775, true);
-                $count = 0;
-                while(false !== ( $file = readdir($dir)) ) {
-                    if (( $file != '.' ) && ( $file != '..' )) {
-                        if ( is_dir($src . '/' . $file) ) {
-                            $count += recursivlyCopy($src . '/' . $file, $dst . '/' . $file);
-                        }
-                        else {
-                            if (copy($src . '/' . $file, $dst . '/' . $file)) {
-                                $count++;
+            if (!function_exists('recursivlyCopy')) {
+                function recursivlyCopy($src, $dst) {
+                    if (!is_dir($src)) return 0;
+                    $dir = opendir($src);
+                    @mkdir($dst, 0775, true);
+                    $count = 0;
+                    while(false !== ( $file = readdir($dir)) ) {
+                        if (( $file != '.' ) && ( $file != '..' )) {
+                            if ( is_dir($src . '/' . $file) ) {
+                                $count += recursivlyCopy($src . '/' . $file, $dst . '/' . $file);
+                            }
+                            else {
+                                if (copy($src . '/' . $file, $dst . '/' . $file)) {
+                                    @chmod($dst . '/' . $file, 0664);
+                                    $count++;
+                                }
                             }
                         }
                     }
+                    closedir($dir);
+                    return $count;
                 }
-                closedir($dir);
-                return $count;
             }
 
             try {
                 $total = recursivlyCopy($source, $destination);
                 $result .= "✅ Berhasil menyalin $total file ke folder publik.\n\n";
-                $result .= "⚠️ Catatan: Hubungkan ulang link storage jika perlu, namun sekarang Laravel akan menyimpan file langsung ke $destination.";
+                $result .= "🚀 Sekarang folder 'storage' Anda adalah FOLDER ASLI yang didukung oleh semua server cPanel.";
             } catch (Exception $e) {
-                $result .= "❌ Error: " . $e->getMessage();
+                $result .= "❌ Error saat menyalin: " . $e->getMessage();
+            }
+            break;
+
+        case 'check_storage':
+            $actionName = '📂 Cek Struktur Storage';
+            $paths = [
+                'Internal Storage (Laravel)' => $laravelPath . '/storage/app/public',
+                'Public Storage (Browser Access)' => __DIR__ . '/storage',
+            ];
+
+            $result = "";
+            foreach ($paths as $label => $path) {
+                $result .= "=== $label ===\n";
+                $result .= "Full Path: $path\n";
+                if (file_exists($path)) {
+                    $result .= "Exists: ✅\n";
+                    $isLink = is_link($path);
+                    $result .= "Type: " . ($isLink ? "⚠️ SYMLINK (Bisa menyebabkan gambar tidak muncul di cPanel)" : "✅ FOLDER ASLI") . "\n";
+                    if ($isLink) {
+                        $result .= "Link Target: " . readlink($path) . "\n";
+                    }
+                    
+                    if (is_dir($path)) {
+                        $files = scandir($path);
+                        $result .= "Contents: " . (count($files) - 2) . " items\n";
+                        foreach ($files as $file) {
+                            if ($file != '.' && $file != '..') {
+                                $full = $path . '/' . $file;
+                                $type = is_dir($full) ? '[DIR] ' : '[FILE]';
+                                $result .= "  $type $file - " . decoct(fileperms($full) & 0777) . "\n";
+                                
+                                if (is_dir($full)) {
+                                    $subFiles = scandir($full);
+                                    foreach ($subFiles as $sf) {
+                                        if ($sf != '.' && $sf != '..') {
+                                            $result .= "    - $sf\n";
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    $result .= "Exists: ❌ TIDAK ADA\n";
+                }
+                $result .= "\n";
             }
             break;
 
@@ -627,6 +696,7 @@ if (isset($_POST['action'])) {
             <div class="grid">
                 <form method="POST"><button type="submit" name="action" value="migrate_status" class="btn btn-blue">📋 Status Migrasi</button></form>
                 <form method="POST"><button type="submit" name="action" value="move_storage" class="btn btn-purple">🚚 Migrasi File Storage</button></form>
+                <form method="POST"><button type="submit" name="action" value="check_storage" class="btn btn-blue">📂 Cek Struktur Storage</button></form>
                 <form method="POST"><button type="submit" name="action" value="queue_work" class="btn btn-blue">⚙️ Process Queue</button></form>
                 <form method="POST"><button type="submit" name="action" value="debug_500" class="btn btn-red">🐛 Debug Error 500</button></form>
             </div>
