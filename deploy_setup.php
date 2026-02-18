@@ -476,6 +476,53 @@ if (isset($_POST['action'])) {
 
             break;
 
+        case 'move_storage':
+            $actionName = '🚚 Migrasi File Storage';
+            $source = $laravelPath . '/storage/app/public';
+            $destination = __DIR__ . '/storage';
+
+            $result = "Memindahkan file dari:\nSource: $source\nDest: $destination\n\n";
+
+            if (!is_dir($source)) {
+                $result .= "❌ Folder source tidak ditemukan.";
+                break;
+            }
+
+            if (!is_dir($destination)) {
+                @mkdir($destination, 0775, true);
+                $result .= "📁 Folder destination dibuat.\n";
+            }
+
+            // Function to copy directory recursively
+            function recursivlyCopy($src, $dst) {
+                $dir = opendir($src);
+                @mkdir($dst, 0775, true);
+                $count = 0;
+                while(false !== ( $file = readdir($dir)) ) {
+                    if (( $file != '.' ) && ( $file != '..' )) {
+                        if ( is_dir($src . '/' . $file) ) {
+                            $count += recursivlyCopy($src . '/' . $file, $dst . '/' . $file);
+                        }
+                        else {
+                            if (copy($src . '/' . $file, $dst . '/' . $file)) {
+                                $count++;
+                            }
+                        }
+                    }
+                }
+                closedir($dir);
+                return $count;
+            }
+
+            try {
+                $total = recursivlyCopy($source, $destination);
+                $result .= "✅ Berhasil menyalin $total file ke folder publik.\n\n";
+                $result .= "⚠️ Catatan: Hubungkan ulang link storage jika perlu, namun sekarang Laravel akan menyimpan file langsung ke $destination.";
+            } catch (Exception $e) {
+                $result .= "❌ Error: " . $e->getMessage();
+            }
+            break;
+
         case 'queue_work':
             $actionName = '⚙️ Process Queue';
             $result = runArtisan('queue:work --stop-when-empty', $laravelPath);
@@ -579,6 +626,7 @@ if (isset($_POST['action'])) {
             <h3>🛠️ Utilities</h3>
             <div class="grid">
                 <form method="POST"><button type="submit" name="action" value="migrate_status" class="btn btn-blue">📋 Status Migrasi</button></form>
+                <form method="POST"><button type="submit" name="action" value="move_storage" class="btn btn-purple">🚚 Migrasi File Storage</button></form>
                 <form method="POST"><button type="submit" name="action" value="queue_work" class="btn btn-blue">⚙️ Process Queue</button></form>
                 <form method="POST"><button type="submit" name="action" value="debug_500" class="btn btn-red">🐛 Debug Error 500</button></form>
             </div>
