@@ -169,20 +169,37 @@ class ProductController extends Controller
                 ->with('warning', 'Produk tidak dapat dihapus karena sudah pernah dipesan. Produk telah dinonaktifkan.');
         }
         
-        // Produk belum pernah dipesan, hapus permanen
-        DB::transaction(function () use ($product) {
-            if ($product->gambar) {
-                Storage::disk('public')->delete($product->gambar);
-            }
-            // Dapatkan ID dari nilai-nilai yang akan dihapus bersama produk
-            $detachedValueIds = $product->attributeValues()->pluck('attribute_values.id');
-            // Hapus produk, yang juga akan melepaskan relasi di tabel pivot
-            $product->delete();
-            // Jalankan pembersihan untuk nilai-nilai yang baru saja dilepaskan
-            $this->cleanupAttributes($detachedValueIds);
-        });
+        try {
+            // Produk belum pernah dipesan, hapus permanen
+            DB::transaction(function () use ($product) {
+                // Hapus gambar produk
+                if ($product->gambar) {
+                    Storage::disk('public')->delete($product->gambar);
+                }
 
-        return redirect()->route('products.index')->with('message', 'Produk berhasil dihapus.');
+                // Dapatkan ID dari nilai-nilai yang akan dihapus bersama produk
+                $detachedValueIds = $product->attributeValues()->pluck('attribute_values.id');
+
+                // Detach semua relasi many-to-many secara eksplisit
+                // (SoftDeletes tidak men-trigger ON DELETE CASCADE di database)
+                $product->attributeValues()->detach();
+                $product->designTemplates()->detach();
+
+                // Hapus review terkait
+                $product->reviews()->delete();
+
+                // Hapus produk secara permanen (bukan soft delete)
+                $product->forceDelete();
+
+                // Jalankan pembersihan untuk nilai-nilai yang baru saja dilepaskan
+                $this->cleanupAttributes($detachedValueIds);
+            });
+
+            return redirect()->route('products.index')->with('message', 'Produk berhasil dihapus.');
+        } catch (\Exception $e) {
+            return redirect()->route('products.index')
+                ->with('error', 'Gagal menghapus produk: ' . $e->getMessage());
+        }
     }
 
     /**
