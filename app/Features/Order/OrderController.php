@@ -514,7 +514,7 @@ class OrderController extends Controller
      * Mark an order as paid (called by frontend after successful Midtrans payment).
      * This is a fallback for when webhook cannot reach localhost during development.
      */
-    public function markAsPaid(Order $order)
+    public function verifyPayment(Order $order)
     {
         // Pastikan hanya pemilik pesanan yang bisa memanggil
         $customer = auth()->user()->customer;

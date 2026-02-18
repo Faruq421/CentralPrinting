@@ -24,8 +24,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/my-orders/{order}', [OrderController::class, 'show'])->name('orders.show');
     
     // Route untuk update status pembayaran setelah sukses dari Midtrans
-    Route::post('/orders/{order}/mark-paid', [OrderController::class, 'markAsPaid'])
-        ->name('orders.markPaid');
+    Route::post('/payment/verify/{order}', [OrderController::class, 'verifyPayment'])
+        ->name('payment.verify');
     
     // Route untuk customer membatalkan pesanan (hanya jika unpaid)
     Route::post('/orders/{order}/cancel', [OrderController::class, 'cancelOrder'])

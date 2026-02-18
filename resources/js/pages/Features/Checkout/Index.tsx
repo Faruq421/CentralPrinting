@@ -345,7 +345,7 @@ export default function CheckoutPage({ cartItems, subtotal, paymentMethods }: Pr
 
                             // Panggil backend untuk update status pembayaran
                             try {
-                                await axios.post(route('orders.markPaid', order_id));
+                                await axios.post(route('payment.verify', order_id));
                             } catch (err) {
                                 console.error('Gagal update status pembayaran:', err);
                             }

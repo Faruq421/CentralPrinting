@@ -81,7 +81,7 @@ export default function Show({ order }: PageProps<{ order: Order }>) {
                     onSuccess: async (result: unknown) => {
                         console.log('Payment success:', result);
                         try {
-                            await axios.post(route('orders.markPaid', order.id));
+                            await axios.post(route('payment.verify', order.id));
                         } catch (err) {
                             console.error('Gagal update status pembayaran:', err);
                         }

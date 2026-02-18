@@ -156,9 +156,8 @@ export default function MyOrdersPage() {
                     onSuccess: async (result: unknown) => {
                         console.log('Payment success:', result);
 
-                        // Update status pembayaran di backend
                         try {
-                            await axios.post(route('orders.markPaid', order.id));
+                            await axios.post(route('payment.verify', order.id));
                         } catch (err) {
                             console.error('Gagal update status pembayaran:', err);
                         }
