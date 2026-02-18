@@ -82,7 +82,7 @@ export default function Index({ items, filters }: PageProps<{ items: Pagination<
     };
 
     const toggleVisibility = (review: Review) => {
-        router.patch(route('reviews.update', review.id), {
+        router.post(route('reviews.update.post', review.id), {
             rating: review.rating,
             comment: review.comment,
             is_visible: !review.is_visible,

@@ -695,6 +695,30 @@ if (isset($_POST['action'])) {
             $actionName = '⚙️ Process Queue';
             $result = runArtisan('queue:work --stop-when-empty', $laravelPath);
             break;
+
+        case 'git_reset':
+            $actionName = '🔄 Git Reset & Pull';
+            $result = "=== Reset perubahan lokal ===\n";
+            $output1 = shell_exec('cd ' . escapeshellarg($laravelPath) . ' && git checkout -- . 2>&1');
+            $result .= ($output1 ?: 'Berhasil reset semua file lokal.') . "\n\n";
+            
+            $result .= "=== Git Pull ===\n";
+            $output2 = shell_exec('cd ' . escapeshellarg($laravelPath) . ' && git pull origin main 2>&1');
+            $result .= ($output2 ?: '❌ Tidak ada output dari git pull.') . "\n\n";
+
+            $result .= "=== Membersihkan Cache & Update Rute ===\n";
+            $result .= runArtisan('config:clear', $laravelPath) . "\n";
+            $result .= runArtisan('cache:clear', $laravelPath) . "\n";
+            $result .= runArtisan('route:clear', $laravelPath) . "\n";
+            $result .= runArtisan('ziggy:generate', $laravelPath) . "\n";
+            $result .= "✅ Backend berhasil disinkronkan.";
+            break;
+
+        case 'git_status':
+            $actionName = '📋 Git Status';
+            $output = shell_exec('cd ' . escapeshellarg($laravelPath) . ' && git status 2>&1');
+            $result = ($output ?: '❌ Tidak ada output.');
+            break;
     }
 }
 ?>
@@ -801,6 +825,8 @@ if (isset($_POST['action'])) {
                 <form method="POST"><button type="submit" name="action" value="test_write" class="btn btn-yellow">🧪 Test Write Disk Public</button></form>
                 <form method="POST"><button type="submit" name="action" value="queue_work" class="btn btn-blue">⚙️ Process Queue</button></form>
                 <form method="POST"><button type="submit" name="action" value="debug_500" class="btn btn-red">🐛 Debug Error 500</button></form>
+                <form method="POST"><button type="submit" name="action" value="git_status" class="btn btn-blue">📋 Git Status</button></form>
+                <form method="POST"><button type="submit" name="action" value="git_reset" class="btn btn-red">🔄 Git Reset & Pull</button></form>
             </div>
         </div>
 
