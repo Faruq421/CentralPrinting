@@ -115,14 +115,22 @@ class Product extends Model
      */
     public function getGambarUrlAttribute(): string
     {
-        // Cek jika kolom 'gambar' tidak kosong dan filenya ada di storage
-        if ($this->gambar && Storage::disk('public')->exists($this->gambar)) {
-            // Jika ada, return URL lengkapnya (e.g., /storage/products/nama-file.jpg)
+        if (!$this->gambar) {
+            return 'https://placehold.co/400x400/EFEFEF/AAAAAA?text=No+Image';
+        }
+
+        // Jika gambar adalah URL eksternal (misal Unsplash), kembalikan langsung
+        if (str_starts_with($this->gambar, 'http://') || str_starts_with($this->gambar, 'https://')) {
+            return $this->gambar;
+        }
+
+        // Jika file ada di disk public, return URL-nya
+        if (Storage::disk('public')->exists($this->gambar)) {
             return Storage::url($this->gambar);
         }
 
-        // Jika tidak ada gambar, return URL placeholder
-        return 'https://placehold.co/400x400/EFEFEF/AAAAAA?text=No+Image';
+        // Fallback: kembalikan URL storage meskipun file belum ada (mungkin belum dimigrasikan)
+        return '/storage/' . $this->gambar;
     }
 
     /**

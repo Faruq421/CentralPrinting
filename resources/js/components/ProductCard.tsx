@@ -24,8 +24,15 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product, className, onQuickView }: ProductCardProps) {
-    // Determine image source: strict URL or storage path
-    const imageSrc = product.gambar_url || (product.gambar ? `/storage/${product.gambar}` : '/placeholder.png');
+    // Determine image source: use gambar_url accessor, or build path manually
+    const getImageSrc = () => {
+        if (product.gambar_url) return product.gambar_url;
+        if (!product.gambar) return '/placeholder.png';
+        // Jika gambar adalah URL eksternal, kembalikan langsung
+        if (product.gambar.startsWith('http://') || product.gambar.startsWith('https://')) return product.gambar;
+        return `/storage/${product.gambar}`;
+    };
+    const imageSrc = getImageSrc();
 
     return (
         <Card className={cn("overflow-hidden group transition-all duration-300 hover:shadow-xl h-full flex flex-col", className)}>

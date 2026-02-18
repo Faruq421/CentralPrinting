@@ -86,7 +86,7 @@ function ProductTable({ items, onSort }: ProductTableProps) {
                             <TableRow key={item.id_produk} className={!item.is_active ? 'opacity-60 bg-muted/30' : ''}>
                                 <TableCell>
                                     <img
-                                        src={`/storage/${item.gambar}`}
+                                        src={item.gambar?.startsWith('http') ? item.gambar : `/storage/${item.gambar}`}
                                         alt={item.nama_produk}
                                         className="h-16 w-16 rounded-md object-cover"
                                         onError={(e) => {
