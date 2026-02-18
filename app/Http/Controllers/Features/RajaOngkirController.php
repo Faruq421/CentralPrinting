@@ -108,7 +108,14 @@ class RajaOngkirController extends Controller
             Log::info('RajaOngkir: Province API response', ['status' => $response->status()]);
 
             if ($response->successful() && isset($json['data'])) {
-                $provinces = $json['data'];
+                // Map to frontend expected format (id, name)
+                $provinces = array_map(function($p) {
+                    return [
+                        'id' => $p['province_id'] ?? $p['id'] ?? 0,
+                        'name' => $p['province'] ?? $p['name'] ?? 'Unknown'
+                    ];
+                }, $json['data']);
+                
                 Cache::put('rajaongkir_provinces', $provinces, 60 * 60 * 24);
 
                 return response()->json([
@@ -121,9 +128,17 @@ class RajaOngkirController extends Controller
             Log::warning('RajaOngkir: API returned error, using static fallback', [
                 'message' => $json['message'] ?? $json['meta']['message'] ?? 'Unknown',
             ]);
+            
+            $provinces = array_map(function($p) {
+                return [
+                    'id' => $p['province_id'],
+                    'name' => $p['province']
+                ];
+            }, $this->getStaticProvinces());
+
             return response()->json([
                 'success' => true,
-                'data' => $this->getStaticProvinces(),
+                'data' => $provinces,
             ]);
 
         } catch (\Exception $e) {
@@ -131,9 +146,17 @@ class RajaOngkirController extends Controller
             Log::error('RajaOngkir: Connection failed, using static fallback', [
                 'error' => $e->getMessage(),
             ]);
+            
+            $provinces = array_map(function($p) {
+                return [
+                    'id' => $p['province_id'],
+                    'name' => $p['province']
+                ];
+            }, $this->getStaticProvinces());
+
             return response()->json([
                 'success' => true,
-                'data' => $this->getStaticProvinces(),
+                'data' => $provinces,
             ]);
         }
     }
@@ -169,7 +192,16 @@ class RajaOngkirController extends Controller
             Log::info('RajaOngkir: Cities API response', ['status' => $response->status()]);
 
             if ($response->successful() && isset($json['data'])) {
-                $cities = $json['data'];
+                // Map to frontend expected format (id, name, type, postal_code)
+                $cities = array_map(function($c) {
+                    return [
+                        'id' => $c['city_id'] ?? $c['id'] ?? 0,
+                        'name' => $c['city_name'] ?? $c['name'] ?? 'Unknown',
+                        'type' => $c['type'] ?? '',
+                        'postal_code' => $c['postal_code'] ?? ''
+                    ];
+                }, $json['data']);
+                
                 Cache::put($cacheKey, $cities, 60 * 60 * 24);
 
                 return response()->json([
