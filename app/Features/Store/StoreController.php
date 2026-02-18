@@ -14,7 +14,7 @@ class StoreController extends Controller
      */
     public function index()
     {
-        $stores = Store::orderBy('created_at', 'desc')->paginate(10);
+        $stores = Store::orderBy('id', 'desc')->paginate(10);
 
         return Inertia::render('Features/Store/Index', [
             'items' => $stores,
