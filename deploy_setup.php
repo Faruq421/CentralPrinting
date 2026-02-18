@@ -634,6 +634,20 @@ if (isset($_POST['action'])) {
             $result .= ($output ?: '❌ Tidak ada output dari Laravel. Kemungkinan shell_exec dibatasi.');
             break;
 
+        case 'npm_install':
+            $actionName = '📦 NPM Install';
+            $result = "Menjalankan npm install...\n\n";
+            $output = shell_exec('cd ' . escapeshellarg($laravelPath) . ' && npm install 2>&1');
+            $result .= ($output ?: '❌ Tidak ada output. Pastikan Node.js dan NPM terinstall di server.');
+            break;
+
+        case 'npm_build':
+            $actionName = '🏗️ NPM Build';
+            $result = "Menjalankan npm run build...\n(Proses ini bisa memakan waktu 1-3 menit)\n\n";
+            $output = shell_exec('cd ' . escapeshellarg($laravelPath) . ' && npm run build 2>&1');
+            $result .= ($output ?: '❌ Tidak ada output. Pastikan Node.js dan NPM terinstall di server.');
+            break;
+
         case 'queue_work':
             $actionName = '⚙️ Process Queue';
             $result = runArtisan('queue:work --stop-when-empty', $laravelPath);
@@ -700,6 +714,8 @@ if (isset($_POST['action'])) {
             <div class="grid">
                 <form method="POST"><button type="submit" name="action" value="download_composer" class="btn btn-purple">📥 Download Composer</button></form>
                 <form method="POST"><button type="submit" name="action" value="composer_install" class="btn btn-purple">📦 Composer Install (~3-5 mnt)</button></form>
+                <form method="POST"><button type="submit" name="action" value="npm_install" class="btn btn-green">📦 NPM Install</button></form>
+                <form method="POST"><button type="submit" name="action" value="npm_build" class="btn btn-green">🏗️ NPM Build (~1-3 mnt)</button></form>
             </div>
         </div>
 
