@@ -592,6 +592,48 @@ if (isset($_POST['action'])) {
             }
             break;
 
+        case 'test_write':
+            $actionName = '🧪 Test Write Disk Public';
+            $testFile = 'test_write_' . time() . '.txt';
+            $testContent = 'Laravel Write Test at ' . date('Y-m-d H:i:s');
+            
+            $publicStorage = __DIR__ . '/storage';
+            $perms = file_exists($publicStorage) ? decoct(fileperms($publicStorage) & 0777) : 'n/a';
+            
+            $phpCode = "
+                require 'vendor/autoload.php';
+                \$app = require_once 'bootstrap/app.php';
+                \$kernel = \$app->make(Illuminate\Contracts\Console\Kernel::class);
+                \$kernel->bootstrap();
+                
+                try {
+                    \$disk = Storage::disk('public');
+                    \$path = \$disk->path('');
+                    \$success = \$disk->put('$testFile', '$testContent');
+                    
+                    echo \"DISK_INFO\\n\";
+                    echo \"Public Disk Config Root: \" . \$path . \"\\n\";
+                    echo \"Write Test: \" . (\$success ? '✅ BERHASIL' : '❌ GAGAL') . \"\\n\";
+                    
+                    if (\$success) {
+                        \$fullPath = \$path . '/' . '$testFile';
+                        echo \"Physical File Check: \" . (file_exists(\$fullPath) ? '✅ ADA' : '❌ TIDAK ADA') . \"\\n\";
+                    }
+                } catch (\\Exception \$e) {
+                    echo \"ERROR LARAVEL: \" . \$e->getMessage();
+                }
+            ";
+            
+            $result = "=== DIAGNOSA IZIN TULIS ===\n";
+            $result .= "Folder: $publicStorage\n";
+            $result .= "Permissions: $perms\n";
+            $result .= "Owner: " . (function_exists('posix_getpwuid') ? posix_getpwuid(fileowner($publicStorage))['name'] : fileowner($publicStorage)) . "\n\n";
+            
+            $result .= "--- Eksekusi Laravel ---\n";
+            $output = shell_exec('cd ' . escapeshellarg($laravelPath) . ' && php -r ' . escapeshellarg($phpCode) . ' 2>&1');
+            $result .= ($output ?: '❌ Tidak ada output dari Laravel. Kemungkinan shell_exec dibatasi.');
+            break;
+
         case 'queue_work':
             $actionName = '⚙️ Process Queue';
             $result = runArtisan('queue:work --stop-when-empty', $laravelPath);
@@ -697,6 +739,7 @@ if (isset($_POST['action'])) {
                 <form method="POST"><button type="submit" name="action" value="migrate_status" class="btn btn-blue">📋 Status Migrasi</button></form>
                 <form method="POST"><button type="submit" name="action" value="move_storage" class="btn btn-purple">🚚 Migrasi File Storage</button></form>
                 <form method="POST"><button type="submit" name="action" value="check_storage" class="btn btn-blue">📂 Cek Struktur Storage</button></form>
+                <form method="POST"><button type="submit" name="action" value="test_write" class="btn btn-yellow">🧪 Test Write Disk Public</button></form>
                 <form method="POST"><button type="submit" name="action" value="queue_work" class="btn btn-blue">⚙️ Process Queue</button></form>
                 <form method="POST"><button type="submit" name="action" value="debug_500" class="btn btn-red">🐛 Debug Error 500</button></form>
             </div>
