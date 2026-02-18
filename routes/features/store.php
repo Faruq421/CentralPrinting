@@ -10,6 +10,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('stores')->group(function () {
     Route::post('/', [StoreController::class, 'store'])->name('stores.store');
     Route::get('/{store}/edit', [StoreController::class, 'edit'])->name('stores.edit');
     Route::put('/{store}', [StoreController::class, 'update'])->name('stores.update');
+    Route::post('/{store}/update', [StoreController::class, 'update'])->name('stores.update.post');
     Route::delete('/{store}', [StoreController::class, 'destroy'])->name('stores.destroy');
     Route::post('/{store}/remove', [StoreController::class, 'destroy'])->name('stores.destroy.remove');
 });
