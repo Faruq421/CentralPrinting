@@ -516,10 +516,22 @@ class OrderController extends Controller
      */
     public function verifyPayment(Order $order)
     {
+        Log::info('VerifyPayment started', ['order_id' => $order->id, 'user_id' => auth()->id()]);
+
         // Pastikan hanya pemilik pesanan yang bisa memanggil
         $customer = auth()->user()->customer;
-        if (!$customer || $order->customer_id !== $customer->id) {
-            return response()->json(['error' => 'Unauthorized'], 403);
+        
+        if (!$customer) {
+            Log::warning('VerifyPayment failed: Customer profile not found', ['user_id' => auth()->id()]);
+            return response()->json(['error' => 'Unauthorized - No Customer Profile'], 403);
+        }
+
+        if ($order->customer_id !== $customer->id) {
+            Log::warning('VerifyPayment failed: Order ownership mismatch', [
+                'order_customer_id' => $order->customer_id,
+                'current_customer_id' => $customer->id
+            ]);
+            return response()->json(['error' => 'Unauthorized - Order Mismatch'], 403);
         }
 
         // Update hanya jika belum paid

@@ -149,6 +149,7 @@ class PaymentController extends Controller
             $fraudStatus = $notification->fraud_status ?? null;
 
             Log::info('Midtrans Notification Received', [
+                'full_payload' => $request->all(), // Log full payload for debugging
                 'order_id' => $orderId,
                 'transaction_status' => $transactionStatus,
                 'payment_type' => $paymentType,
@@ -160,10 +161,11 @@ class PaymentController extends Controller
             $actualOrderId = $orderIdParts[1] ?? null;
 
             if (!$actualOrderId) {
-                Log::error('Invalid order ID format from Midtrans: ' . $orderId);
+                Log::error('Invalid order ID format from Midtrans', ['order_id' => $orderId]);
                 return response()->json(['status' => 'error', 'message' => 'Invalid order ID'], 400);
             }
 
+            Log::info('Searching for order', ['actual_id' => $actualOrderId]);
             $order = Order::find($actualOrderId);
 
             if (!$order) {
