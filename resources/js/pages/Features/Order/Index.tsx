@@ -77,7 +77,7 @@ export default function Index({ items, filters }: PageProps<{ items: Pagination<
     const [updateModalOpen, setUpdateModalOpen] = useState(false);
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
-    const { data, setData, patch, processing, reset } = useForm({
+    const { data, setData, post, patch, processing, reset } = useForm({
         order_status: '' as OrderStatus,
         payment_status: '' as PaymentStatus,
         tracking_number: '',
@@ -133,7 +133,7 @@ export default function Index({ items, filters }: PageProps<{ items: Pagination<
         e.preventDefault();
         if (!selectedOrder) return;
 
-        patch(route('orders.update', selectedOrder.id), {
+        post(route('orders.update.post', selectedOrder.id), {
             onSuccess: () => {
                 setUpdateModalOpen(false);
                 reset();
@@ -148,7 +148,7 @@ export default function Index({ items, filters }: PageProps<{ items: Pagination<
             o.id === order.id ? { ...o, order_status: newStatus } : o
         ));
 
-        router.patch(route('orders.update', order.id), {
+        router.post(route('orders.update.post', order.id), {
             order_status: newStatus,
         }, {
             preserveState: true,
@@ -167,7 +167,7 @@ export default function Index({ items, filters }: PageProps<{ items: Pagination<
             o.id === order.id ? { ...o, payment_status: newStatus } : o
         ));
 
-        router.patch(route('orders.update', order.id), {
+        router.post(route('orders.update.post', order.id), {
             payment_status: newStatus,
         }, {
             preserveState: true,

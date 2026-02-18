@@ -48,7 +48,7 @@ export default function FormPage({ auth, item }: PageProps<{ item?: Order }>) {
     function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
         if (item) {
-            put(route('orders.update', item.id));
+            post(route('orders.update.post', item.id));
         } else {
             post(route('orders.store'));
         }

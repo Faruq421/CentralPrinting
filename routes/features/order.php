@@ -34,6 +34,10 @@ Route::middleware(['auth'])->group(function () {
 
 // Rute untuk Admin (CRUD orders - index, create, edit, update, destroy)
 // Exclude 'show' karena sudah didefinisikan di atas untuk customer
-Route::resource('orders', OrderController::class)
-    ->middleware(['auth', 'verified', 'role:admin'])
-    ->except(['show']);
+Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
+    Route::post('/orders/{order}/update-admin', [OrderController::class, 'update'])
+        ->name('orders.update.post');
+    
+    Route::resource('orders', OrderController::class)
+        ->except(['show']);
+});
