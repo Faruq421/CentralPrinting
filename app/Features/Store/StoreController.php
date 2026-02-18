@@ -45,7 +45,7 @@ class StoreController extends Controller
             'operating_hours' => 'nullable|array',
             'operating_hours.*.days' => 'required|array',
             'operating_hours.*.hours' => 'required|string',
-            'google_maps_url' => 'nullable|url|max:500',
+            'google_maps_url' => 'nullable|url|max:2000',
             'is_active' => 'boolean',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ]);
@@ -84,7 +84,7 @@ class StoreController extends Controller
             'operating_hours' => 'nullable|array',
             'operating_hours.*.days' => 'required|array',
             'operating_hours.*.hours' => 'required|string',
-            'google_maps_url' => 'nullable|url|max:500',
+            'google_maps_url' => 'nullable|url|max:2000',
             'is_active' => 'boolean',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ]);

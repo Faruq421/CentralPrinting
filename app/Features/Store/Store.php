@@ -36,23 +36,52 @@ class Store extends Model
     protected $appends = ['image_url'];
 
     /**
-     * Boot method to auto-generate slug
+     * Boot method to auto-generate unique slug
      */
     protected static function boot()
     {
         parent::boot();
 
         static::creating(function ($store) {
-            if (empty($store->slug)) {
-                $store->slug = Str::slug($store->name);
-            }
+            $store->slug = static::generateUniqueSlug($store->name);
         });
 
         static::updating(function ($store) {
-            if ($store->isDirty('name') && empty($store->slug)) {
-                $store->slug = Str::slug($store->name);
+            if ($store->isDirty('name')) {
+                $store->slug = static::generateUniqueSlug($store->name, $store->id);
             }
         });
+    }
+
+    /**
+     * Generate a unique slug for the store.
+     *
+     * @param string $name
+     * @param int|null $excludeId
+     * @return string
+     */
+    protected static function generateUniqueSlug(string $name, ?int $excludeId = null): string
+    {
+        $slug = Str::slug($name);
+        $originalSlug = $slug;
+        $counter = 1;
+
+        $query = static::where('slug', $slug);
+        if ($excludeId !== null) {
+            $query->where('id', '!=', $excludeId);
+        }
+
+        while ($query->exists()) {
+            $slug = $originalSlug . '-' . $counter;
+            $counter++;
+            
+            $query = static::where('slug', $slug);
+            if ($excludeId !== null) {
+                $query->where('id', '!=', $excludeId);
+            }
+        }
+
+        return $slug;
     }
 
     /**
