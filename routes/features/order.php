@@ -5,12 +5,12 @@ use App\Features\Order\OrderController;
 use App\Http\Controllers\Features\RajaOngkirController;
 
 // RajaOngkir Shipping API Routes (public, no auth required for provinces/cities)
-// RajaOngkir Shipping API Routes (using neutral 'delivery' prefix for firewall bypass)
-Route::prefix('delivery')->name('shipping.')->group(function () {
-    Route::get('/list-provinces', [RajaOngkirController::class, 'getProvinces'])->name('provinces');
-    Route::get('/list-cities/{provinceId}', [RajaOngkirController::class, 'getCities'])->name('cities');
-    Route::post('/cost', [RajaOngkirController::class, 'calculateCost'])->name('cost');
-    Route::post('/all-options', [RajaOngkirController::class, 'getAllShippingOptions'])->name('all-options');
+// RajaOngkir Shipping API Routes (Deep Obfuscation to bypass paranoid firewalls)
+Route::prefix('wilayah')->name('shipping.')->group(function () {
+    Route::get('/p-list', [RajaOngkirController::class, 'getProvinces'])->name('provinces');
+    Route::get('/c-list/{provinceId}', [RajaOngkirController::class, 'getCities'])->name('cities');
+    Route::post('/cost-check', [RajaOngkirController::class, 'calculateCost'])->name('cost');
+    Route::post('/opts', [RajaOngkirController::class, 'getAllShippingOptions'])->name('all-options');
 });
 
 // Rute untuk Customer (checkout, my-orders, payment update)

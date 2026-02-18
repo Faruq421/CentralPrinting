@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class RajaOngkirController extends Controller
 {
@@ -43,11 +44,13 @@ class RajaOngkirController extends Controller
         }
 
         try {
+            Log::info('RajaOngkir: Fetching provinces');
             $response = Http::withHeaders([
                 'key' => $this->apiKey,
             ])->get("{$this->baseUrl}/destination/province");
 
             $json = $response->json();
+            Log::info('RajaOngkir Result:', ['json' => $json]);
 
             if ($response->successful() && isset($json['data'])) {
                 $provinces = $json['data'];
@@ -98,11 +101,13 @@ class RajaOngkirController extends Controller
         }
 
         try {
+            Log::info("RajaOngkir: Fetching cities for province {$provinceId}");
             $response = Http::withHeaders([
                 'key' => $this->apiKey,
             ])->get("{$this->baseUrl}/destination/city/{$provinceId}");
 
             $json = $response->json();
+            Log::info('RajaOngkir Result (Cities):', ['json' => $json]);
 
             if ($response->successful() && isset($json['data'])) {
                 $cities = $json['data'];
