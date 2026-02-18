@@ -47,7 +47,7 @@ interface Props {
 
 export default function Index({ items }: Props) {
     const handleDelete = (id: number) => {
-        router.delete(route('stores.destroy', id));
+        router.post(route('stores.destroy.remove', id));
     };
 
     return (
@@ -176,8 +176,8 @@ export default function Index({ items }: Props) {
                                             key={page}
                                             href={route('stores.index', { page })}
                                             className={`px-3 py-1 rounded ${page === items.current_page
-                                                    ? 'bg-orange-600 text-white'
-                                                    : 'bg-gray-100 hover:bg-gray-200'
+                                                ? 'bg-orange-600 text-white'
+                                                : 'bg-gray-100 hover:bg-gray-200'
                                                 }`}
                                         >
                                             {page}
