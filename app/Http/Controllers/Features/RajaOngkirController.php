@@ -16,8 +16,10 @@ class RajaOngkirController extends Controller
 
     public function __construct()
     {
-        $this->apiKey = env('RAJAONGKIR_API_KEY');
-        $this->originCity = env('RAJAONGKIR_ORIGIN_CITY', 501);
+        // IMPORTANT: Must use config() instead of env() for production (config cache)
+        $this->apiKey = config('rajaongkir.api_key');
+        $this->baseUrl = config('rajaongkir.base_url', 'https://rajaongkir.komerce.id/api/v1');
+        $this->originCity = config('rajaongkir.origin_city', 501);
     }
 
     /**
