@@ -11,7 +11,9 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('products')->name(
     Route::get('/{product:id_produk}/edit', [ProductController::class, 'edit'])->name('edit');
     Route::put('/{product:id_produk}', [ProductController::class, 'update'])->name('update');
     Route::delete('/{product:id_produk}', [ProductController::class, 'destroy'])->name('destroy');
+    Route::post('/{product:id_produk}/delete', [ProductController::class, 'destroy'])->name('destroy.post');
     Route::patch('/{product:id_produk}/toggle-status', [ProductController::class, 'toggleStatus'])->name('toggleStatus');
+    Route::post('/{product:id_produk}/toggle-status', [ProductController::class, 'toggleStatus'])->name('toggleStatus.post');
 });
 
 // Rute untuk publik (tidak perlu login) - DITEMPATKAN DI BAWAH SETELAH RUTE ADMIN

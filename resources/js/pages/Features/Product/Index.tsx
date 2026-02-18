@@ -134,33 +134,40 @@ function ProductTable({ items, onSort }: ProductTableProps) {
                                             <DropdownMenuSeparator />
 
                                             {/* Toggle Active/Inactive */}
-                                            <DropdownMenuItem asChild>
-                                                <Link
-                                                    href={route('products.toggleStatus', item.id_produk)}
-                                                    method="patch"
-                                                    as="button"
-                                                    className={item.is_active ? 'text-orange-600' : 'text-green-600'}
-                                                >
-                                                    {item.is_active ? (
-                                                        <>
-                                                            <PowerOff className="mr-2 h-4 w-4" />
-                                                            <span>Nonaktifkan</span>
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <Power className="mr-2 h-4 w-4" />
-                                                            <span>Aktifkan</span>
-                                                        </>
-                                                    )}
-                                                </Link>
+                                            <DropdownMenuItem
+                                                className={item.is_active ? 'text-orange-600' : 'text-green-600'}
+                                                onClick={() => {
+                                                    router.post(route('products.toggleStatus.post', item.id_produk), {}, {
+                                                        preserveScroll: true,
+                                                    });
+                                                }}
+                                            >
+                                                {item.is_active ? (
+                                                    <>
+                                                        <PowerOff className="mr-2 h-4 w-4" />
+                                                        <span>Nonaktifkan</span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Power className="mr-2 h-4 w-4" />
+                                                        <span>Aktifkan</span>
+                                                    </>
+                                                )}
                                             </DropdownMenuItem>
 
                                             {/* Delete Button */}
-                                            <DropdownMenuItem className="text-red-600" asChild>
-                                                <Link href={route('products.destroy', item.id_produk)} method="delete" as="button">
-                                                    <Trash2 className="mr-2 h-4 w-4" />
-                                                    <span>Hapus</span>
-                                                </Link>
+                                            <DropdownMenuItem
+                                                className="text-red-600"
+                                                onClick={() => {
+                                                    if (confirm('Apakah Anda yakin ingin menghapus produk ini?')) {
+                                                        router.post(route('products.destroy.post', item.id_produk), {}, {
+                                                            preserveScroll: true,
+                                                        });
+                                                    }
+                                                }}
+                                            >
+                                                <Trash2 className="mr-2 h-4 w-4" />
+                                                <span>Hapus</span>
                                             </DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
