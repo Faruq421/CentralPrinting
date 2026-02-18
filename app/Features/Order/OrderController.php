@@ -113,10 +113,17 @@ class OrderController extends Controller
             return $carry + ($item['price'] * $item['quantity']);
         }, 0);
 
+        // Fetch provinces to pass directly as props (eliminates frontend API call dependency)
+        $rajaOngkirController = new \App\Http\Controllers\Features\RajaOngkirController();
+        $provincesResponse = $rajaOngkirController->getProvinces();
+        $provincesData = json_decode($provincesResponse->getContent(), true);
+        $provinces = ($provincesData['success'] ?? false) ? ($provincesData['data'] ?? []) : [];
+
         return Inertia::render('Features/Checkout/Index', [
             'cartItems' => $itemsForCheckout,
             'subtotal' => $subtotal,
             'paymentMethods' => self::PAYMENT_METHODS,
+            'initialProvinces' => $provinces,
         ]);
     }
 

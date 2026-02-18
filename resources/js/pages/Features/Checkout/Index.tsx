@@ -81,6 +81,7 @@ interface Props {
     cartItems: CartItem[];
     subtotal: number;
     paymentMethods: PaymentMethod[];
+    initialProvinces?: Array<{ province_id: string; province: string }>;
 }
 
 // Payment Method Groups for Accordion
@@ -118,17 +119,20 @@ const PAYMENT_GROUPS = [
 
 type CheckoutStep = 'address' | 'shipping' | 'payment';
 
-export default function CheckoutPage({ cartItems, subtotal, paymentMethods }: Props) {
+export default function CheckoutPage({ cartItems, subtotal, paymentMethods, initialProvinces = [] }: Props) {
     const { auth } = usePage<SharedData>().props;
     const user = auth.user;
 
     // Wizard State
     const [step, setStep] = useState<CheckoutStep>('address');
 
-    // Province/City State
-    const [provinces, setProvinces] = useState<Province[]>([]);
+    // Province/City State - use initialProvinces from backend props (mapped to frontend format)
+    const mappedProvinces = useMemo(() => {
+        return initialProvinces.map(p => ({ id: parseInt(p.province_id), name: p.province }));
+    }, [initialProvinces]);
+    const [provinces, setProvinces] = useState<Province[]>(mappedProvinces);
     const [cities, setCities] = useState<City[]>([]);
-    const [isLoadingProvinces, setIsLoadingProvinces] = useState(true);
+    const [isLoadingProvinces, setIsLoadingProvinces] = useState(false);
     const [isLoadingCities, setIsLoadingCities] = useState(false);
 
     // Shipping Options State
@@ -167,23 +171,13 @@ export default function CheckoutPage({ cartItems, subtotal, paymentMethods }: Pr
         selected_items: cartItems.map(item => item.id),
     });
 
-    // Fetch provinces on mount
+    // Provinces are now loaded from backend props (initialProvinces)
+    // No need for separate API call - this eliminates Ziggy route dependency
     useEffect(() => {
-        const fetchProvinces = async () => {
-            try {
-                const response = await fetch(route('shipping.provinces'));
-                const result = await response.json();
-                if (result.success) {
-                    setProvinces(result.data);
-                }
-            } catch (error) {
-                console.error('Failed to fetch provinces:', error);
-            } finally {
-                setIsLoadingProvinces(false);
-            }
-        };
-        fetchProvinces();
-    }, []);
+        if (mappedProvinces.length > 0) {
+            setProvinces(mappedProvinces);
+        }
+    }, [mappedProvinces]);
 
     // Fetch cities when province changes
     useEffect(() => {
@@ -199,7 +193,7 @@ export default function CheckoutPage({ cartItems, subtotal, paymentMethods }: Pr
             setShippingOptions([]);
 
             try {
-                const response = await fetch(route('shipping.cities', { provinceId: selectedProvinceId }));
+                const response = await fetch(`/wilayah/c-list/${selectedProvinceId}`);
                 const result = await response.json();
                 if (result.success) {
                     setCities(result.data);
@@ -228,7 +222,7 @@ export default function CheckoutPage({ cartItems, subtotal, paymentMethods }: Pr
             console.log('Fetching shipping options for city:', selectedCityId, 'weight:', totalWeight);
 
             try {
-                const response = await axios.post(route('shipping.all-options'), {
+                const response = await axios.post('/wilayah/opts', {
                     destination: parseInt(selectedCityId),
                     weight: totalWeight,
                 });
