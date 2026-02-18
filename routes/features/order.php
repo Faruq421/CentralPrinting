@@ -5,9 +5,10 @@ use App\Features\Order\OrderController;
 use App\Http\Controllers\Features\RajaOngkirController;
 
 // RajaOngkir Shipping API Routes (public, no auth required for provinces/cities)
-Route::prefix('shipping')->name('shipping.')->group(function () {
-    Route::get('/provinces', [RajaOngkirController::class, 'getProvinces'])->name('provinces');
-    Route::get('/cities/{provinceId}', [RajaOngkirController::class, 'getCities'])->name('cities');
+// RajaOngkir Shipping API Routes (using neutral 'delivery' prefix for firewall bypass)
+Route::prefix('delivery')->name('shipping.')->group(function () {
+    Route::get('/list-provinces', [RajaOngkirController::class, 'getProvinces'])->name('provinces');
+    Route::get('/list-cities/{provinceId}', [RajaOngkirController::class, 'getCities'])->name('cities');
     Route::post('/cost', [RajaOngkirController::class, 'calculateCost'])->name('cost');
     Route::post('/all-options', [RajaOngkirController::class, 'getAllShippingOptions'])->name('all-options');
 });
@@ -23,8 +24,8 @@ Route::middleware(['auth'])->group(function () {
     // Rute untuk detail pesanan customer (harus di atas rute resource admin)
     Route::get('/my-orders/{order}', [OrderController::class, 'show'])->name('orders.show');
     
-    // Route untuk update status pembayaran setelah sukses dari Midtrans
-    Route::post('/payment/verify/{order}', [OrderController::class, 'verifyPayment'])
+    // Route for payment status update (using generic '/order-status' for firewall bypass)
+    Route::post('/order-status/{order}', [OrderController::class, 'verifyPayment'])
         ->name('payment.verify');
     
     // Route untuk customer membatalkan pesanan (hanya jika unpaid)

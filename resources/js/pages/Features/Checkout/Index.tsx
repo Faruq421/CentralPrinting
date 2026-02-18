@@ -171,7 +171,7 @@ export default function CheckoutPage({ cartItems, subtotal, paymentMethods }: Pr
     useEffect(() => {
         const fetchProvinces = async () => {
             try {
-                const response = await fetch('/shipping/provinces');
+                const response = await fetch(route('shipping.provinces'));
                 const result = await response.json();
                 if (result.success) {
                     setProvinces(result.data);
@@ -199,7 +199,7 @@ export default function CheckoutPage({ cartItems, subtotal, paymentMethods }: Pr
             setShippingOptions([]);
 
             try {
-                const response = await fetch(`/shipping/cities/${selectedProvinceId}`);
+                const response = await fetch(route('shipping.cities', { provinceId: selectedProvinceId }));
                 const result = await response.json();
                 if (result.success) {
                     setCities(result.data);
@@ -228,7 +228,7 @@ export default function CheckoutPage({ cartItems, subtotal, paymentMethods }: Pr
             console.log('Fetching shipping options for city:', selectedCityId, 'weight:', totalWeight);
 
             try {
-                const response = await axios.post('/shipping/all-options', {
+                const response = await axios.post(route('shipping.all-options'), {
                     destination: parseInt(selectedCityId),
                     weight: totalWeight,
                 });

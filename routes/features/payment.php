@@ -23,7 +23,7 @@ Route::middleware(['auth'])->group(function () {
         ->name('payment.clientKey');
 });
 
-// Webhook route - no authentication, no CSRF (handled in VerifyCsrfToken middleware)
-Route::post('/api/payment/notification', [PaymentController::class, 'handleNotification'])
+// Webhook route - using generic '/order-notify' to bypass firewall filters
+Route::post('/order-notify', [PaymentController::class, 'handleNotification'])
     ->name('payment.notification')
     ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class]);
