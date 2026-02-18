@@ -73,9 +73,8 @@ export default function FormPage({ store }: Props) {
         e.preventDefault();
 
         if (isEditing) {
-            post(route('stores.update', store.id), {
+            post(route('stores.update.post', store.id), {
                 forceFormData: true,
-                _method: 'PUT',
             } as any);
         } else {
             post(route('stores.store'), {
