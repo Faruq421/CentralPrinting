@@ -22,8 +22,8 @@ Route::prefix('shipping')->group(function () {
 
 // Rute untuk Customer (checkout, my-orders, payment update)
 Route::middleware(['auth'])->group(function () {
-    Route::get('/checkout', [OrderController::class, 'create'])->name('checkout.create');
-    Route::post('/checkout', [OrderController::class, 'store'])->name('checkout.store');
+    Route::get('/purchase', [OrderController::class, 'create'])->name('checkout.create');
+    Route::post('/purchase', [OrderController::class, 'store'])->name('checkout.store');
     
     // Rute untuk halaman "Pesanan Saya" pelanggan
     Route::get('/my-orders', [OrderController::class, 'myOrders'])->name('orders.my');

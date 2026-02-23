@@ -378,10 +378,24 @@ export default function CheckoutPage({ cartItems, subtotal, paymentMethods, init
             }
         } catch (error: unknown) {
             console.error('Checkout error:', error);
-            if (axios.isAxiosError(error) && error.response?.data?.error) {
-                toast.error(error.response.data.error);
+            if (axios.isAxiosError(error)) {
+                const status = error.response?.status;
+                const msg = error.response?.data?.error || error.response?.data?.message;
+                const details = error.response?.data?.details;
+
+                if (status === 403) {
+                    toast.error('Akses ditolak (403). Kemungkinan firewall server memblokir. Coba lagi nanti.');
+                } else if (status === 422 && error.response?.data?.errors) {
+                    // Validation errors
+                    const firstError = Object.values(error.response.data.errors).flat()[0];
+                    toast.error(String(firstError) || 'Data tidak valid.');
+                } else if (msg) {
+                    toast.error(msg + (details ? ` (${details})` : ''));
+                } else {
+                    toast.error(`Gagal membuat pesanan (${status || 'network error'}). Silakan coba lagi.`);
+                }
             } else {
-                toast.error('Terjadi kesalahan. Silakan coba lagi.');
+                toast.error('Koneksi gagal. Periksa internet Anda dan coba lagi.');
             }
             setIsPaymentProcessing(false);
         }
