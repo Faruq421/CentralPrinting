@@ -341,29 +341,31 @@ export default function CheckoutPage({ cartItems, subtotal, paymentMethods, init
                             console.log('Payment success:', result);
 
                             // Panggil backend untuk update status pembayaran
+                            // Jika gagal (403/error), tetap lanjut redirect — webhook Midtrans akan handle
                             try {
                                 await axios.post(route('payment.verify', order_id));
                             } catch (err) {
-                                console.error('Gagal update status pembayaran:', err);
+                                console.warn('verifyPayment failed (firewall?), relying on Midtrans webhook:', err);
                             }
 
                             toast.success('Pembayaran berhasil!');
-                            router.visit(route('orders.show', order_id));
+                            // Redirect ke halaman pesanan saya
+                            router.visit(route('orders.my'));
                         },
                         onPending: (result: unknown) => {
                             console.log('Payment pending:', result);
                             toast.info('Menunggu pembayaran. Silakan selesaikan pembayaran Anda.');
-                            router.visit(route('orders.show', order_id));
+                            router.visit(route('orders.my'));
                         },
                         onError: (result: unknown) => {
                             console.error('Payment error:', result);
                             toast.error('Pembayaran gagal. Silakan coba lagi.');
-                            router.visit(route('orders.show', order_id));
+                            router.visit(route('orders.my'));
                         },
                         onClose: () => {
                             console.log('Payment popup closed');
                             toast.info('Anda menutup popup pembayaran. Pesanan tetap tersimpan.');
-                            router.visit(route('orders.show', order_id));
+                            router.visit(route('orders.my'));
                         },
                     });
                 } else {

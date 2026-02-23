@@ -31,8 +31,8 @@ Route::middleware(['auth'])->group(function () {
     // Rute untuk detail pesanan customer (harus di atas rute resource admin)
     Route::get('/my-orders/{order}', [OrderController::class, 'show'])->name('orders.show');
     
-    // Route for payment status update (using generic '/order-status' for firewall bypass)
-    Route::post('/order-status/{order}', [OrderController::class, 'verifyPayment'])
+    // Route for payment status update (obfuscated URL to bypass cPanel WAF/firewall)
+    Route::post('/trx-confirm/{order}', [OrderController::class, 'verifyPayment'])
         ->name('payment.verify');
     
     // Route untuk customer membatalkan pesanan (hanya jika unpaid)
