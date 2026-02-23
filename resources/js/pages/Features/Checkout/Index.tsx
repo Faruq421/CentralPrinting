@@ -81,7 +81,7 @@ interface Props {
     cartItems: CartItem[];
     subtotal: number;
     paymentMethods: PaymentMethod[];
-    initialProvinces?: Array<{ province_id: string; province: string }>;
+    initialProvinces?: Array<{ id?: number | string; name?: string; province_id?: string; province?: string }>;
 }
 
 // Payment Method Groups for Accordion
@@ -128,7 +128,10 @@ export default function CheckoutPage({ cartItems, subtotal, paymentMethods, init
 
     // Province/City State - use initialProvinces from backend props (mapped to frontend format)
     const mappedProvinces = useMemo(() => {
-        return initialProvinces.map(p => ({ id: parseInt(p.province_id), name: p.province }));
+        return initialProvinces.map(p => ({
+            id: parseInt(String(p.id ?? p.province_id ?? '0')),
+            name: (p.name ?? p.province ?? 'Unknown'),
+        })).filter(p => p.id > 0 && p.name !== 'Unknown');
     }, [initialProvinces]);
     const [provinces, setProvinces] = useState<Province[]>(mappedProvinces);
     const [cities, setCities] = useState<City[]>([]);
