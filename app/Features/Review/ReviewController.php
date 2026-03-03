@@ -20,12 +20,18 @@ class ReviewController extends Controller
     {
         // Get customer record
         $customer = auth()->user()->customer;
+
+        // Fallback: query langsung ke DB jika relasi gagal load
+        if (!$customer) {
+            $customer = \App\Features\Customer\Customer::where('user_id', auth()->id())->first();
+        }
+
         if (!$customer) {
             abort(403, 'Anda tidak memiliki profil customer.');
         }
         
-        // Ensure customer owns this order
-        if ($order->customer_id !== $customer->id) {
+        // Ensure customer owns this order (int cast to avoid type mismatch)
+        if ((int) $order->customer_id !== (int) $customer->id) {
             abort(403, 'Anda tidak memiliki izin untuk mereview pesanan ini.');
         }
 
@@ -117,7 +123,10 @@ class ReviewController extends Controller
         // Verify order belongs to customer and is completed
         $order = Order::findOrFail($orderId);
         $customer = auth()->user()->customer;
-        if (!$customer || $order->customer_id !== $customer->id) {
+        if (!$customer) {
+            $customer = \App\Features\Customer\Customer::where('user_id', auth()->id())->first();
+        }
+        if (!$customer || (int) $order->customer_id !== (int) $customer->id) {
             abort(403);
         }
 
