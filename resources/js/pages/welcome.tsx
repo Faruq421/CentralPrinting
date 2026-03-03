@@ -12,7 +12,6 @@ import { motion } from 'framer-motion';
 import HeroSection from './welcome/partials/HeroSection';
 import USPSection from './welcome/partials/USPSection';
 import CategoriesSection from './welcome/partials/CategoriesSection';
-import FlashSaleSection from './welcome/partials/FlashSaleSection';
 
 // Interfaces
 interface Product {
