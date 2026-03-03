@@ -346,16 +346,24 @@ class OrderController extends Controller
 
         // Pastikan pengguna hanya bisa melihat order miliknya, kecuali admin
         $customer = auth()->user()->customer;
+
+        // Fallback: jika relasi customer tidak ter-load (null), query langsung ke DB
+        if (!$customer) {
+            $customer = \App\Features\Customer\Customer::where('user_id', auth()->id())->first();
+        }
         
         Log::info('OrderController@show authorization check', [
             'customer_id' => $customer ? $customer->id : 'null',
             'order_customer_id' => $order->customer_id,
+            'comparison' => $customer ? ((int) $order->customer_id === (int) $customer->id ? 'MATCH' : 'MISMATCH') : 'NO_CUSTOMER',
         ]);
 
-        if (auth()->user()->role !== 'admin' && (!$customer || $order->customer_id !== $customer->id)) {
+        if (auth()->user()->role !== 'admin' && (!$customer || (int) $order->customer_id !== (int) $customer->id)) {
             Log::warning('OrderController@show access denied (403)', [
                 'user_id' => auth()->id(),
-                'order_id' => $order->id
+                'order_id' => $order->id,
+                'customer_id' => $customer ? $customer->id : 'null',
+                'order_customer_id' => $order->customer_id,
             ]);
             abort(403);
         }
