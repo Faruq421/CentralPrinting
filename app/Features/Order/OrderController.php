@@ -630,6 +630,45 @@ class OrderController extends Controller
     }
 
     /**
+     * Customer confirms that the order has been received.
+     * Changes order_status from 'shipped' to 'completed'.
+     */
+    public function completeOrder(Order $order)
+    {
+        $customer = auth()->user()->customer;
+
+        // Fallback: query langsung ke DB
+        if (!$customer) {
+            $customer = \App\Features\Customer\Customer::where('user_id', auth()->id())->first();
+        }
+
+        if (!$customer || (int) $order->customer_id !== (int) $customer->id) {
+            return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk menyelesaikan pesanan ini.');
+        }
+
+        // Hanya bisa menyelesaikan jika sudah dikirim (shipped)
+        if ($order->order_status !== 'shipped') {
+            return redirect()->back()->with('error', 'Pesanan hanya bisa diselesaikan jika sudah dalam status pengiriman.');
+        }
+
+        // Hanya bisa menyelesaikan jika sudah dibayar
+        if ($order->payment_status !== 'paid') {
+            return redirect()->back()->with('error', 'Pesanan hanya bisa diselesaikan jika pembayaran sudah dikonfirmasi.');
+        }
+
+        $order->update([
+            'order_status' => 'completed',
+        ]);
+
+        Log::info('Order completed by customer', [
+            'order_id' => $order->id,
+            'customer_id' => $customer->id,
+        ]);
+
+        return redirect()->route('orders.my')->with('message', 'Pesanan telah diselesaikan. Terima kasih! Silakan berikan penilaian Anda.');
+    }
+
+    /**
      * Sync payment status with Midtrans Transaction Status API.
      * Called automatically when user opens "My Orders" page.
      */

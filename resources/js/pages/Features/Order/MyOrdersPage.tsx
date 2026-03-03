@@ -132,6 +132,7 @@ export default function MyOrdersPage() {
     const { orders } = usePage<{ orders: PaginatedOrders }>().props;
     const [cancellingOrderId, setCancellingOrderId] = useState<number | null>(null);
     const [payingOrderId, setPayingOrderId] = useState<number | null>(null);
+    const [completingOrderId, setCompletingOrderId] = useState<number | null>(null);
 
     // Handle cancel order
     const handleCancelOrder = (orderId: number) => {
@@ -192,6 +193,22 @@ export default function MyOrdersPage() {
             toast.error('Gagal memulai pembayaran. Silakan coba lagi.');
             setPayingOrderId(null);
         }
+    };
+
+    // Handle complete order (customer confirms delivery)
+    const handleCompleteOrder = (orderId: number) => {
+        setCompletingOrderId(orderId);
+        router.post(route('orders.complete', orderId), {}, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setCompletingOrderId(null);
+                toast.success('Pesanan berhasil diselesaikan! Silakan berikan penilaian.');
+            },
+            onError: () => {
+                setCompletingOrderId(null);
+                toast.error('Gagal menyelesaikan pesanan.');
+            },
+        });
     };
 
     // Check if order can be cancelled
@@ -322,16 +339,57 @@ export default function MyOrdersPage() {
                                     <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
                                         <Link href={route('orders.show', order.id)}>Lihat Detail</Link>
                                     </Button>
-                                    {order.order_status?.toLowerCase() === 'completed' && (
-                                        <>
-                                            {(!order.reviews_edited_count || order.reviews_edited_count === 0) && (
-                                                <Button asChild className={`${order.reviews_count && order.reviews_count > 0 ? 'bg-blue-600 hover:bg-blue-700' : 'bg-yellow-500 hover:bg-yellow-600'} text-white`}>
-                                                    <Link href={route('reviews.create-for-order', order.id)}>
-                                                        {order.reviews_count && order.reviews_count > 0 ? 'Update Penilaian' : 'Beri Penilaian'}
-                                                    </Link>
+
+                                    {/* Tombol Pesanan Sudah Sampai - hanya tampil jika status shipped & sudah dibayar */}
+                                    {order.order_status?.toLowerCase() === 'shipped' && order.payment_status?.toLowerCase() === 'paid' && (
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button
+                                                    size="sm"
+                                                    className="bg-green-600 hover:bg-green-700 text-white w-full sm:w-auto"
+                                                    disabled={completingOrderId === order.id}
+                                                >
+                                                    {completingOrderId === order.id ? (
+                                                        <>
+                                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                            Memproses...
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <CheckCircle className="mr-2 h-4 w-4" />
+                                                            Pesanan Sudah Sampai
+                                                        </>
+                                                    )}
                                                 </Button>
-                                            )}
-                                        </>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Konfirmasi Pesanan #{order.id} Sudah Sampai?</AlertDialogTitle>
+                                                    <AlertDialogDescription className="space-y-2">
+                                                        <span className="block">Dengan mengkonfirmasi bahwa pesanan sudah sampai, Anda menyatakan bahwa barang telah diterima dengan baik.</span>
+                                                        <span className="block font-semibold text-red-600">⚠️ Perhatian: Setelah pesanan diselesaikan, pesanan TIDAK DAPAT dibatalkan lagi.</span>
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>Belum, Kembali</AlertDialogCancel>
+                                                    <AlertDialogAction
+                                                        onClick={() => handleCompleteOrder(order.id)}
+                                                        className="bg-green-600 hover:bg-green-700"
+                                                    >
+                                                        Ya, Pesanan Sudah Sampai
+                                                    </AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+                                    )}
+
+                                    {/* Tombol Beri Penilaian - hanya tampil jika status completed */}
+                                    {order.order_status?.toLowerCase() === 'completed' && (
+                                        <Button asChild size="sm" className={`${order.reviews_count && order.reviews_count > 0 ? 'bg-blue-600 hover:bg-blue-700' : 'bg-yellow-500 hover:bg-yellow-600'} text-white w-full sm:w-auto`}>
+                                            <Link href={route('reviews.create-for-order', order.id)}>
+                                                {order.reviews_count && order.reviews_count > 0 ? 'Update Penilaian' : 'Beri Penilaian'}
+                                            </Link>
+                                        </Button>
                                     )}
                                 </CardFooter>
                             </Card>

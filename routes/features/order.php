@@ -38,6 +38,10 @@ Route::middleware(['auth'])->group(function () {
     // Route untuk customer membatalkan pesanan (Bypass 403 Firewall)
     Route::post('/trx-halt/{order}', [OrderController::class, 'cancelOrder'])
         ->name('orders.cancel');
+
+    // Route untuk customer konfirmasi pesanan sudah sampai (Bypass 403 Firewall)
+    Route::post('/trx-done/{order}', [OrderController::class, 'completeOrder'])
+        ->name('orders.complete');
 });
 
 // Rute untuk Admin (CRUD orders - index, create, edit, update, destroy)
