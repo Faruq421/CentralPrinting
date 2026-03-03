@@ -156,13 +156,15 @@ export default function MyOrdersPage() {
                     onSuccess: async (result: unknown) => {
                         console.log('Payment success:', result);
 
+                        // Try to update status via backend, but don't fail if blocked
                         try {
                             await axios.post(route('payment.verify', order.id));
                         } catch (err) {
-                            console.error('Gagal update status pembayaran:', err);
+                            console.warn('verifyPayment failed, auto-sync will handle:', err);
                         }
 
                         toast.success('Pembayaran berhasil!');
+                        // Reload page — auto-sync in backend will update status
                         router.visit(window.location.href, { preserveScroll: true });
                     },
                     onPending: (result: unknown) => {

@@ -500,18 +500,28 @@ class OrderController extends Controller
                 'orders' => ['data' => []],
             ]);
         }
+
+        // Auto-sync: Check Midtrans for all unpaid orders that have a midtrans_order_id
+        $unpaidOrders = Order::where('customer_id', $customer->id)
+            ->where('payment_status', 'unpaid')
+            ->whereNotNull('midtrans_order_id')
+            ->where('order_status', '!=', 'cancelled')
+            ->get();
+
+        foreach ($unpaidOrders as $unpaidOrder) {
+            $this->syncPaymentStatus($unpaidOrder);
+        }
         
-        // 1. Ambil pesanan HANYA untuk customer yang sedang login
+        // Ambil pesanan HANYA untuk customer yang sedang login
         $orders = Order::where('customer_id', $customer->id)
             ->with(['items.product']) 
-            ->withCount('reviews') // Cek apakah ada review
+            ->withCount('reviews')
             ->withCount(['reviews as reviews_edited_count' => function ($query) {
                 $query->where('is_edited', true);
             }])
             ->latest() 
             ->paginate(10);
 
-        // 2. Render halaman React BARU, kirim data 'orders' sebagai props
         return Inertia::render('Features/Order/MyOrdersPage', [
             'orders' => $orders,
         ]);
@@ -586,5 +596,65 @@ class OrderController extends Controller
         ]);
 
         return redirect()->route('orders.my')->with('message', 'Pesanan berhasil dibatalkan.');
+    }
+
+    /**
+     * Sync payment status with Midtrans Transaction Status API.
+     * Called automatically when user opens "My Orders" page.
+     */
+    private function syncPaymentStatus(Order $order): void
+    {
+        if (!$order->midtrans_order_id) {
+            return;
+        }
+
+        try {
+            \Midtrans\Config::$serverKey = config('midtrans.server_key');
+            \Midtrans\Config::$isProduction = config('midtrans.is_production');
+
+            // Call Midtrans Transaction Status API
+            // Returns stdClass or array depending on SDK version
+            $rawStatus = \Midtrans\Transaction::status($order->midtrans_order_id);
+            $status = (array) $rawStatus; // Normalize to array
+
+            Log::info('Midtrans status check', [
+                'order_id' => $order->id,
+                'midtrans_order_id' => $order->midtrans_order_id,
+                'transaction_status' => $status['transaction_status'] ?? 'unknown',
+            ]);
+
+            $transactionStatus = $status['transaction_status'] ?? null;
+            $fraudStatus = $status['fraud_status'] ?? null;
+
+            if (in_array($transactionStatus, ['capture', 'settlement'])) {
+                // For credit card with capture, check fraud status
+                if ($transactionStatus === 'capture' && $fraudStatus === 'challenge') {
+                    return; // Don't auto-update challenged transactions
+                }
+
+                if ($order->payment_status !== 'paid') {
+                    $order->update([
+                        'payment_status' => 'paid',
+                        'order_status' => 'processing',
+                        'payment_method' => $status['payment_type'] ?? $order->payment_method,
+                        'transaction_id' => $status['transaction_id'] ?? null,
+                        'payment_time' => now(),
+                    ]);
+                    Log::info('Order auto-synced to paid', ['order_id' => $order->id]);
+                }
+            } elseif (in_array($transactionStatus, ['deny', 'cancel', 'expire'])) {
+                $order->update([
+                    'payment_status' => 'expired',
+                    'transaction_id' => $status['transaction_id'] ?? null,
+                ]);
+                Log::info('Order auto-synced to expired', ['order_id' => $order->id]);
+            }
+        } catch (\Exception $e) {
+            // Silently fail — don't break the page if Midtrans API is unreachable
+            Log::warning('Midtrans status check failed', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 }
