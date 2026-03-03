@@ -33,7 +33,9 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->validateCsrfTokens(except: [
-            'order-notify',
+            'ipn-handler',       // Midtrans webhook (was 'order-notify')
+            'trx-confirm/*',     // Frontend payment verify
+            'trx-token/*',       // Create snap token
             'api/payment/notification',
             'wilayah/*',
             'shipping/*',

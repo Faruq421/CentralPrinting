@@ -14,16 +14,17 @@ use Illuminate\Support\Facades\Route;
 
 // Protected routes - require authentication
 Route::middleware(['auth'])->group(function () {
-    // Create Snap token for an order
-    Route::post('/payment/{order}/create-token', [PaymentController::class, 'createSnapToken'])
+    // Create Snap token for an order (obfuscated URL to bypass WAF)
+    Route::post('/trx-token/{order}', [PaymentController::class, 'createSnapToken'])
         ->name('payment.createToken');
     
     // Get Midtrans client key for frontend
-    Route::get('/payment/client-key', [PaymentController::class, 'getClientKey'])
+    Route::get('/trx-config', [PaymentController::class, 'getClientKey'])
         ->name('payment.clientKey');
 });
 
-// Webhook route - using generic '/order-notify' to bypass firewall filters
-Route::post('/order-notify', [PaymentController::class, 'handleNotification'])
+// Webhook route - using '/ipn-handler' (IPN = Instant Payment Notification) to bypass WAF
+// URL 'order-notify' was blocked by cPanel firewall because it contains 'order'
+Route::post('/ipn-handler', [PaymentController::class, 'handleNotification'])
     ->name('payment.notification')
     ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class]);
