@@ -331,9 +331,32 @@ class OrderController extends Controller
      */
     public function show(Order $order)
     {
+        Log::info('OrderController@show triggered', [
+            'order_id' => $order->id,
+            'auth_user_id' => auth()->id(),
+            'auth_role' => auth()->user()->role ?? 'none',
+        ]);
+
+        // Auto-sync status before showing details
+        if ($order->payment_status === 'unpaid' && $order->midtrans_order_id) {
+            $this->syncPaymentStatus($order);
+            // Refresh the model in case it was updated
+            $order->refresh();
+        }
+
         // Pastikan pengguna hanya bisa melihat order miliknya, kecuali admin
         $customer = auth()->user()->customer;
+        
+        Log::info('OrderController@show authorization check', [
+            'customer_id' => $customer ? $customer->id : 'null',
+            'order_customer_id' => $order->customer_id,
+        ]);
+
         if (auth()->user()->role !== 'admin' && (!$customer || $order->customer_id !== $customer->id)) {
+            Log::warning('OrderController@show access denied (403)', [
+                'user_id' => auth()->id(),
+                'order_id' => $order->id
+            ]);
             abort(403);
         }
 

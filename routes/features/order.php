@@ -28,15 +28,15 @@ Route::middleware(['auth'])->group(function () {
     // Rute untuk halaman "Pesanan Saya" pelanggan
     Route::get('/my-orders', [OrderController::class, 'myOrders'])->name('orders.my');
     
-    // Rute untuk detail pesanan customer (harus di atas rute resource admin)
-    Route::get('/my-orders/{order}', [OrderController::class, 'show'])->name('orders.show');
+    // Rute untuk detail pesanan customer (Bypass 403 Firewall)
+    Route::get('/trx-view/{order}', [OrderController::class, 'show'])->name('orders.show');
     
     // Route for payment status update (obfuscated URL to bypass cPanel WAF/firewall)
     Route::post('/trx-confirm/{order}', [OrderController::class, 'verifyPayment'])
         ->name('payment.verify');
     
-    // Route untuk customer membatalkan pesanan (hanya jika unpaid)
-    Route::post('/orders/{order}/cancel', [OrderController::class, 'cancelOrder'])
+    // Route untuk customer membatalkan pesanan (Bypass 403 Firewall)
+    Route::post('/trx-halt/{order}', [OrderController::class, 'cancelOrder'])
         ->name('orders.cancel');
 });
 
